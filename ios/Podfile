@@ -42,5 +42,21 @@ target 'SalahCompanion' do
         end
       end
     end
+    
+    # Fix RCT-Folly clockid_t typedef redefinition error with newer iOS SDK
+    # This patches folly/portability/Time.h to check if clockid_t is already defined
+    folly_portability_time_h = File.join(installer.sandbox.root, 'Headers/Private/RCT-Folly/folly/portability/Time.h')
+    if File.exist?(folly_portability_time_h)
+      file_content = File.read(folly_portability_time_h)
+      # Replace the typedef with a guarded version
+      patched_content = file_content.gsub(
+        /typedef uint8_t clockid_t;/,
+        "#ifndef clockid_t\ntypedef uint8_t clockid_t;\n#endif"
+      )
+      if file_content != patched_content
+        File.write(folly_portability_time_h, patched_content)
+        puts "✅ Patched RCT-Folly Time.h to fix clockid_t redefinition"
+      end
+    end
   end
 end
