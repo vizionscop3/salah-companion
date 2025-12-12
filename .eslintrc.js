@@ -16,8 +16,15 @@ module.exports = {
   },
   env: {
     'react-native/react-native': true,
-    jest: true,
   },
+  overrides: [
+    {
+      files: ['**/__tests__/**/*', '**/*.{test,spec}.*'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/rules-of-hooks': 'error',
