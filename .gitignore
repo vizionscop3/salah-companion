@@ -38,6 +38,13 @@ dist/
 *.orig.*
 web-build/
 
+# iOS Pods (large build artifacts)
+ios/Pods/
+ios/build/
+ios/DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcuserdatad/
+
 # Metro
 .metro-health-check*
 
