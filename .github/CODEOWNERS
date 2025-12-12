@@ -1,11 +1,9 @@
 # Code Owners
 # This file defines ownership of different parts of the codebase
 
-# Core Services
+# Core Application
+/src/ @vizion
 /src/services/ @vizion
-/src/hooks/ @vizion
-
-# UI Components
 /src/screens/ @vizion
 /src/components/ @vizion
 
@@ -21,7 +19,7 @@
 *.json @vizion
 *.js @vizion
 *.ts @vizion
-tsconfig.json @vizion
+*.tsx @vizion
 
 # iOS
 /ios/ @vizion
@@ -29,3 +27,5 @@ tsconfig.json @vizion
 # Android
 /android/ @vizion
 
+# All files
+* @vizion

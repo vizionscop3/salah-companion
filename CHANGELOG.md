@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## **[Unreleased]**
 
 ### **Added**
+
 - Project structure and foundational setup
 - Comprehensive documentation (README, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT)
 - Strategic planning documents (plan.md, roadmap.md, project-roadmap.md)
@@ -17,18 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue and PR templates
 
 ### **Changed**
+
 - N/A
 
 ### **Deprecated**
+
 - N/A
 
 ### **Removed**
+
 - N/A
 
 ### **Fixed**
+
 - N/A
 
 ### **Security**
+
 - Security policy and vulnerability reporting process established
 - OWASP Top 10 compliance framework documented
 
@@ -37,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## **[0.1.0] - 2024-12-XX**
 
 ### **Added**
+
 - Initial project setup
 - Core documentation
 - Database schema design
@@ -55,5 +62,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-*This changelog follows Semantic Versioning and will be updated with each release.*
-
+_This changelog follows Semantic Versioning and will be updated with each release._
