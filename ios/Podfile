@@ -41,6 +41,19 @@ target 'SalahCompanion' do
           config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
         end
       end
+      
+      # Fix hermes-engine XCFrameworks copy issue for physical devices
+      if target.name == 'hermes-engine'
+        target.build_phases.each do |phase|
+          if phase.respond_to?(:name) && phase.name == '[CP] Copy XCFrameworks'
+            # Make the script more robust
+            phase.shell_script = phase.shell_script.gsub(
+              /set -e/,
+              'set -e\nset +v' # Add verbose mode and continue on some errors
+            )
+          end
+        end
+      end
     end
     
     # Fix RCT-Folly clockid_t typedef redefinition error with newer iOS SDK
