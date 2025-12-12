@@ -34,10 +34,12 @@ target 'SalahCompanion' do
       # :ccache_enabled => true
     )
     
-    # Fix deployment target warnings for all pods
+    # Fix deployment target warnings for all pods (including Firebase)
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 14.0
+        current_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        # Set minimum to 14.0 for iPhone 12 compatibility
+        if current_target.nil? || current_target.to_f < 14.0
           config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
         end
       end
