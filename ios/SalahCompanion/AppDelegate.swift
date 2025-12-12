@@ -1,43 +1,35 @@
 import UIKit
 import React
-import React_RCTAppDelegate
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
 
-  var reactNativeDelegate: ReactNativeDelegate?
-  var reactNativeFactory: RCTReactNativeFactory?
-
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    let delegate = ReactNativeDelegate()
-    let factory = RCTReactNativeFactory(delegate: delegate)
-    delegate.dependencyProvider = RCTAppDependencyProvider()
+    let bridge = RCTBridge(delegate: self, launchOptions: launchOptions)!
+    let rootView = RCTRootView(bridge: bridge, moduleName: "SalahCompanion", initialProperties: nil)
 
-    reactNativeDelegate = delegate
-    reactNativeFactory = factory
+    if #available(iOS 13.0, *) {
+      rootView.backgroundColor = UIColor.systemBackground
+    } else {
+      rootView.backgroundColor = UIColor.white
+    }
 
     window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "SalahCompanion",
-      in: window,
-      launchOptions: launchOptions
-    )
+    let rootViewController = UIViewController()
+    rootViewController.view = rootView
+    window?.rootViewController = rootViewController
+    window?.makeKeyAndVisible()
 
     return true
   }
 }
 
-class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
-  override func sourceURL(for bridge: RCTBridge) -> URL? {
-    self.bundleURL()
-  }
-
-  override func bundleURL() -> URL? {
+extension AppDelegate: RCTBridgeDelegate {
+  func sourceURL(for bridge: RCTBridge!) -> URL! {
 #if DEBUG
     RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
