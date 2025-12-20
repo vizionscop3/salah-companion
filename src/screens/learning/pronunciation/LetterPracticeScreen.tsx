@@ -120,9 +120,9 @@ export const LetterPracticeScreen: React.FC<LetterPracticeScreenProps> = ({route
         // Analyze pronunciation from recorded audio file
         const analysis = await speechRecognitionService.analyzePronunciationFromFile(
           path,
-          letter.arabic,
+            letter.arabic,
           'ar-SA',
-        );
+          );
 
         const accuracy = analysis.accuracy;
         setAccuracyScore(accuracy);

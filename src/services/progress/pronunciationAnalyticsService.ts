@@ -3,9 +3,13 @@
  *
  * Provides analytics and insights for pronunciation practice sessions.
  * Tracks letter mastery, accuracy trends, and practice frequency.
+ * 
+ * NOTE: Prisma cannot run in React Native (Node.js only).
+ * This service uses AsyncStorage for local storage.
+ * TODO: Replace with proper backend API integration
  */
 
-import {prisma} from '@services/database/prismaClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LetterAnalytics {
   letterId: string;
@@ -48,14 +52,17 @@ export interface AccuracyTrend {
 export async function getAllLetterAnalytics(
   userId: string,
 ): Promise<LetterAnalytics[]> {
-  const progressRecords = await (prisma as any).pronunciationProgress.findMany({
-    where: {
-      userId,
-    },
-    orderBy: {
-      lastPracticedAt: 'desc',
-    },
-  });
+  try {
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
+
+    // Sort by lastPracticedAt descending
+    progressRecords.sort((a, b) => {
+      const dateA = new Date(a.lastPracticedAt || 0).getTime();
+      const dateB = new Date(b.lastPracticedAt || 0).getTime();
+      return dateB - dateA;
+    });
 
   const analytics: LetterAnalytics[] = [];
 
@@ -94,6 +101,10 @@ export async function getAllLetterAnalytics(
     }
     return b.timesPracticed - a.timesPracticed;
   });
+  } catch (error) {
+    console.error('Error getting all letter analytics:', error);
+    return [];
+  }
 }
 
 /**
@@ -103,18 +114,16 @@ export async function getLetterAnalytics(
   userId: string,
   letterId: string,
 ): Promise<LetterAnalytics | null> {
-  const record = await (prisma as any).pronunciationProgress.findUnique({
-    where: {
-      userId_letterId: {
-        userId,
-        letterId,
-      },
-    },
-  });
+  try {
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
 
-  if (!record) {
-    return null;
-  }
+    const record = progressRecords.find((r: any) => r.letterId === letterId);
+
+    if (!record) {
+      return null;
+    }
 
   const improvementTrend = record.accuracyScore
     ? Number(record.accuracyScore) > 0
@@ -137,6 +146,10 @@ export async function getLetterAnalytics(
     masteredAt: record.masteredAt,
     improvementTrend: Math.round(improvementTrend * 100) / 100,
   };
+  } catch (error) {
+    console.error('Error getting letter analytics:', error);
+    return null;
+  }
 }
 
 /**
@@ -145,56 +158,50 @@ export async function getLetterAnalytics(
 export async function getPronunciationPracticeFrequency(
   userId: string,
 ): Promise<PracticeFrequency> {
-  const now = new Date();
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const fourWeeksAgo = new Date(now);
-  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const twelveMonthsAgo = new Date(now);
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const twelveMonthsAgo = new Date(now);
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
-  // Count practices based on lastPracticedAt in PronunciationProgress
-  const [daily, weekly, monthly] = await Promise.all([
-    (prisma as any).pronunciationProgress.count({
-      where: {
-        userId,
-        lastPracticedAt: {
-          gte: sevenDaysAgo,
-        },
-        timesPracticed: {
-          gt: 0,
-        },
-      },
-    }),
-    (prisma as any).pronunciationProgress.count({
-      where: {
-        userId,
-        lastPracticedAt: {
-          gte: fourWeeksAgo,
-        },
-        timesPracticed: {
-          gt: 0,
-        },
-      },
-    }),
-    (prisma as any).pronunciationProgress.count({
-      where: {
-        userId,
-        lastPracticedAt: {
-          gte: twelveMonthsAgo,
-        },
-        timesPracticed: {
-          gt: 0,
-        },
-      },
-    }),
-  ]);
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
 
-  return {
-    daily,
-    weekly,
-    monthly,
-  };
+    const daily = progressRecords.filter((r: any) => {
+      if (!r.lastPracticedAt || !r.timesPracticed || r.timesPracticed === 0) return false;
+      const lastPracticed = new Date(r.lastPracticedAt);
+      return lastPracticed >= sevenDaysAgo;
+    }).length;
+
+    const weekly = progressRecords.filter((r: any) => {
+      if (!r.lastPracticedAt || !r.timesPracticed || r.timesPracticed === 0) return false;
+      const lastPracticed = new Date(r.lastPracticedAt);
+      return lastPracticed >= fourWeeksAgo;
+    }).length;
+
+    const monthly = progressRecords.filter((r: any) => {
+      if (!r.lastPracticedAt || !r.timesPracticed || r.timesPracticed === 0) return false;
+      const lastPracticed = new Date(r.lastPracticedAt);
+      return lastPracticed >= twelveMonthsAgo;
+    }).length;
+
+    return {
+      daily,
+      weekly,
+      monthly,
+    };
+  } catch (error) {
+    console.error('Error getting pronunciation practice frequency:', error);
+    return {
+      daily: 0,
+      weekly: 0,
+      monthly: 0,
+    };
+  }
 }
 
 /**
@@ -205,31 +212,33 @@ export async function getPronunciationAccuracyTrend(
   userId: string,
   days: number = 30,
 ): Promise<AccuracyTrend[]> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  startDate.setHours(0, 0, 0, 0);
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
 
-  const progressRecords = await (prisma as any).pronunciationProgress.findMany({
-    where: {
-      userId,
-      lastPracticedAt: {
-        gte: startDate,
-      },
-      accuracyScore: {
-        not: null,
-      },
-    },
-    orderBy: {
-      lastPracticedAt: 'asc',
-    },
-  });
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const allRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
+
+    const progressRecords = allRecords
+      .filter((r: any) => {
+        if (!r.lastPracticedAt || r.accuracyScore == null) return false;
+        const lastPracticed = new Date(r.lastPracticedAt);
+        return lastPracticed >= startDate;
+      })
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.lastPracticedAt || 0).getTime();
+        const dateB = new Date(b.lastPracticedAt || 0).getTime();
+        return dateA - dateB;
+      });
 
   // Group by date
   const dateMap = new Map<string, {accuracies: number[]; count: number}>();
 
-  progressRecords.forEach(record => {
+  progressRecords.forEach((record: any) => {
     if (record.lastPracticedAt && record.accuracyScore !== null) {
-      const dateKey = record.lastPracticedAt.toISOString().split('T')[0];
+      const dateKey = new Date(record.lastPracticedAt).toISOString().split('T')[0];
       if (!dateMap.has(dateKey)) {
         dateMap.set(dateKey, {accuracies: [], count: 0});
       }
@@ -255,6 +264,10 @@ export async function getPronunciationAccuracyTrend(
   }
 
   return trends.sort((a, b) => a.date.getTime() - b.date.getTime());
+  } catch (error) {
+    console.error('Error getting pronunciation accuracy trend:', error);
+    return [];
+  }
 }
 
 /**
@@ -263,49 +276,71 @@ export async function getPronunciationAccuracyTrend(
 export async function getPronunciationSummary(
   userId: string,
 ): Promise<PronunciationSummary> {
-  const progressRecords = await (prisma as any).pronunciationProgress.findMany({
-    where: {
-      userId,
-    },
-  });
+  try {
+    // Get pronunciation progress from AsyncStorage
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
 
-  const learnedCount = progressRecords.filter((r: any) => r.isLearned).length;
-  const inProgressCount = progressRecords.filter(
-    (r: any) => !r.isLearned && r.timesPracticed > 0,
-  ).length;
+    const learnedCount = progressRecords.filter((r: any) => r.isLearned).length;
+    const inProgressCount = progressRecords.filter(
+      (r: any) => !r.isLearned && r.timesPracticed > 0,
+    ).length;
 
-  const accuracies = progressRecords
-    .map((r: any) => r.accuracyScore)
-    .filter((score: any): score is number => score !== null && score !== undefined)
-    .map((score: any) => Number(score));
+    const accuracies = progressRecords
+      .map((r: any) => r.accuracyScore)
+      .filter((score: any): score is number => score !== null && score !== undefined)
+      .map((score: any) => Number(score));
 
-  const averageAccuracy =
-    accuracies.length > 0
-      ? accuracies.reduce((sum: number, acc: number) => sum + acc, 0) / accuracies.length
-      : 0;
+    const averageAccuracy =
+      accuracies.length > 0
+        ? accuracies.reduce((sum: number, acc: number) => sum + acc, 0) / accuracies.length
+        : 0;
 
-  const totalSessions = progressRecords.reduce(
-    (sum: number, r: any) => sum + r.timesPracticed,
-    0,
-  );
+    const totalSessions = progressRecords.reduce(
+      (sum: number, r: any) => sum + (r.timesPracticed || 0),
+      0,
+    );
 
-  // Assuming 28 letters total (standard Arabic alphabet)
-  const totalLetters = 28;
-  const masteryProgress = totalLetters > 0 ? (learnedCount / totalLetters) * 100 : 0;
+    // Assuming 28 letters total (standard Arabic alphabet)
+    const totalLetters = 28;
+    const masteryProgress = totalLetters > 0 ? (learnedCount / totalLetters) * 100 : 0;
 
-  const [practiceFrequency, accuracyTrend] = await Promise.all([
-    getPronunciationPracticeFrequency(userId),
-    getPronunciationAccuracyTrend(userId, 30),
-  ]);
+    const [practiceFrequency, accuracyTrend] = await Promise.all([
+      getPronunciationPracticeFrequency(userId).catch(() => ({
+        daily: 0,
+        weekly: 0,
+        monthly: 0,
+      })),
+      getPronunciationAccuracyTrend(userId, 30).catch(() => []),
+    ]);
 
-  return {
-    totalLetters,
-    lettersLearned: learnedCount,
-    lettersInProgress: inProgressCount,
-    averageAccuracy: Math.round(averageAccuracy * 100) / 100,
-    totalPracticeSessions: totalSessions,
-    practiceFrequency,
-    accuracyTrend,
-    masteryProgress: Math.round(masteryProgress * 100) / 100,
-  };
+    return {
+      totalLetters,
+      lettersLearned: learnedCount,
+      lettersInProgress: inProgressCount,
+      averageAccuracy: Math.round(averageAccuracy * 100) / 100,
+      totalPracticeSessions: totalSessions,
+      practiceFrequency,
+      accuracyTrend,
+      masteryProgress: Math.round(masteryProgress * 100) / 100,
+    };
+  } catch (error) {
+    console.error('Error getting pronunciation summary:', error);
+    // Return default values on error
+    return {
+      totalLetters: 28,
+      lettersLearned: 0,
+      lettersInProgress: 0,
+      averageAccuracy: 0,
+      totalPracticeSessions: 0,
+      practiceFrequency: {
+        daily: 0,
+        weekly: 0,
+        monthly: 0,
+      },
+      accuracyTrend: [],
+      masteryProgress: 0,
+    };
+  }
 }

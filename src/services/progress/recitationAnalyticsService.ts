@@ -3,9 +3,13 @@
  *
  * Provides analytics and insights for recitation practice sessions.
  * Tracks per-surah/ayah statistics, practice frequency, and accuracy trends.
+ * 
+ * NOTE: Prisma cannot run in React Native (Node.js only).
+ * This service uses AsyncStorage for local storage.
+ * TODO: Replace with proper backend API integration
  */
 
-import {prisma} from '@services/database/prismaClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface SurahAnalytics {
   surahNumber: number;
@@ -57,30 +61,30 @@ export async function getSurahAnalytics(
   userId: string,
   surahNumber: number,
 ): Promise<SurahAnalytics | null> {
-  // Get all practices for this surah
-  // Note: We need to match by surahId or extract from practice data
-  // For now, we'll query by practiceMode and parse surahId from the data
-  const practices = await prisma.recitationPractice.findMany({
-    where: {
-      userId,
-      practiceMode: {
-        in: ['ayah', 'surah'],
-      },
-    },
-    orderBy: {
-      practiceDate: 'desc',
-    },
-  });
+  try {
+    // Get all practices from AsyncStorage
+    const practicesKey = `@salah_companion:recitation_practices:${userId}`;
+    const practicesJson = await AsyncStorage.getItem(practicesKey);
+    const allPractices: any[] = practicesJson ? JSON.parse(practicesJson) : [];
 
-  // Filter practices for this surah
-  // This is a simplified approach - in production, you'd want to store surahNumber directly
-  const surahPractices = practices.filter(p => {
-    if (p.feedbackData && typeof p.feedbackData === 'object') {
-      const feedback = p.feedbackData as any;
-      return feedback.surahNumber === surahNumber;
-    }
-    return false;
-  });
+    // Filter practices for this surah
+    const practices = allPractices.filter(p => {
+      if (p.practiceMode && !['ayah', 'surah'].includes(p.practiceMode)) {
+        return false;
+      }
+      if (p.feedbackData && typeof p.feedbackData === 'object') {
+        const feedback = p.feedbackData as any;
+        return feedback.surahNumber === surahNumber;
+      }
+      return false;
+    }).sort((a, b) => {
+      const dateA = new Date(a.practiceDate || 0).getTime();
+      const dateB = new Date(b.practiceDate || 0).getTime();
+      return dateB - dateA;
+    });
+
+    // Filter practices for this surah
+    const surahPractices = practices;
 
   if (surahPractices.length === 0) {
     return null;
@@ -99,9 +103,9 @@ export async function getSurahAnalytics(
   const bestAccuracy = accuracies.length > 0 ? Math.max(...accuracies) : 0;
 
   // Calculate improvement trend (compare first half vs second half)
-  const sortedPractices = [...surahPractices].sort(
-    (a, b) => a.practiceDate.getTime() - b.practiceDate.getTime(),
-  );
+    const sortedPractices = [...surahPractices].sort(
+      (a, b) => new Date(a.practiceDate || 0).getTime() - new Date(b.practiceDate || 0).getTime(),
+    );
   const midpoint = Math.floor(sortedPractices.length / 2);
   const firstHalf = sortedPractices.slice(0, midpoint);
   const secondHalf = sortedPractices.slice(midpoint);
@@ -128,16 +132,20 @@ export async function getSurahAnalytics(
     0,
   );
 
-  return {
-    surahNumber,
-    surahName: `Surah ${surahNumber}`, // You'd fetch actual name from surah table
-    timesPracticed: surahPractices.length,
-    averageAccuracy: Math.round(averageAccuracy * 100) / 100,
-    bestAccuracy: Math.round(bestAccuracy * 100) / 100,
-    lastPracticedAt: surahPractices[0]?.practiceDate || null,
-    improvementTrend: Math.round(improvementTrend * 100) / 100,
-    totalPracticeMinutes: Math.round(totalMinutes * 10) / 10,
-  };
+    return {
+      surahNumber,
+      surahName: `Surah ${surahNumber}`, // You'd fetch actual name from surah table
+      timesPracticed: surahPractices.length,
+      averageAccuracy: Math.round(averageAccuracy * 100) / 100,
+      bestAccuracy: Math.round(bestAccuracy * 100) / 100,
+      lastPracticedAt: surahPractices[0]?.practiceDate ? new Date(surahPractices[0].practiceDate) : null,
+      improvementTrend: Math.round(improvementTrend * 100) / 100,
+      totalPracticeMinutes: Math.round(totalMinutes * 10) / 10,
+    };
+  } catch (error) {
+    console.error('Error getting surah analytics:', error);
+    return null;
+  }
 }
 
 /**
@@ -146,17 +154,19 @@ export async function getSurahAnalytics(
 export async function getAllSurahAnalytics(
   userId: string,
 ): Promise<SurahAnalytics[]> {
-  const practices = await prisma.recitationPractice.findMany({
-    where: {
-      userId,
-      practiceMode: {
-        in: ['ayah', 'surah'],
-      },
-    },
-    orderBy: {
-      practiceDate: 'desc',
-    },
-  });
+  try {
+    const practicesKey = `@salah_companion:recitation_practices:${userId}`;
+    const practicesJson = await AsyncStorage.getItem(practicesKey);
+    const allPractices: any[] = practicesJson ? JSON.parse(practicesJson) : [];
+
+    // Filter practices for ayah/surah mode
+    const practices = allPractices
+      .filter(p => p.practiceMode && ['ayah', 'surah'].includes(p.practiceMode))
+      .sort((a, b) => {
+        const dateA = new Date(a.practiceDate || 0).getTime();
+        const dateB = new Date(b.practiceDate || 0).getTime();
+        return dateB - dateA;
+      });
 
   // Group by surah number
   const surahMap = new Map<number, typeof practices>();
@@ -190,7 +200,7 @@ export async function getAllSurahAnalytics(
     const bestAccuracy = accuracies.length > 0 ? Math.max(...accuracies) : 0;
 
     const sortedPractices = [...surahPractices].sort(
-      (a, b) => a.practiceDate.getTime() - b.practiceDate.getTime(),
+      (a, b) => new Date(a.practiceDate || 0).getTime() - new Date(b.practiceDate || 0).getTime(),
     );
     const midpoint = Math.floor(sortedPractices.length / 2);
     const firstHalf = sortedPractices.slice(0, midpoint);
@@ -231,6 +241,10 @@ export async function getAllSurahAnalytics(
   }
 
   return analytics.sort((a, b) => b.timesPracticed - a.timesPracticed);
+  } catch (error) {
+    console.error('Error getting all surah analytics:', error);
+    return [];
+  }
 }
 
 /**
@@ -239,46 +253,47 @@ export async function getAllSurahAnalytics(
 export async function getPracticeFrequency(
   userId: string,
 ): Promise<PracticeFrequency> {
-  const now = new Date();
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const fourWeeksAgo = new Date(now);
-  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const twelveMonthsAgo = new Date(now);
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const twelveMonthsAgo = new Date(now);
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
-  const [daily, weekly, monthly] = await Promise.all([
-    prisma.recitationPractice.count({
-      where: {
-        userId,
-        practiceDate: {
-          gte: sevenDaysAgo,
-        },
-      },
-    }),
-    prisma.recitationPractice.count({
-      where: {
-        userId,
-        practiceDate: {
-          gte: fourWeeksAgo,
-        },
-      },
-    }),
-    prisma.recitationPractice.count({
-      where: {
-        userId,
-        practiceDate: {
-          gte: twelveMonthsAgo,
-        },
-      },
-    }),
-  ]);
+    const practicesKey = `@salah_companion:recitation_practices:${userId}`;
+    const practicesJson = await AsyncStorage.getItem(practicesKey);
+    const practices: any[] = practicesJson ? JSON.parse(practicesJson) : [];
 
-  return {
-    daily,
-    weekly,
-    monthly,
-  };
+    const daily = practices.filter(p => {
+      const practiceDate = new Date(p.practiceDate || 0);
+      return practiceDate >= sevenDaysAgo;
+    }).length;
+
+    const weekly = practices.filter(p => {
+      const practiceDate = new Date(p.practiceDate || 0);
+      return practiceDate >= fourWeeksAgo;
+    }).length;
+
+    const monthly = practices.filter(p => {
+      const practiceDate = new Date(p.practiceDate || 0);
+      return practiceDate >= twelveMonthsAgo;
+    }).length;
+
+    return {
+      daily,
+      weekly,
+      monthly,
+    };
+  } catch (error) {
+    console.error('Error getting practice frequency:', error);
+    return {
+      daily: 0,
+      weekly: 0,
+      monthly: 0,
+    };
+  }
 }
 
 /**
@@ -288,30 +303,31 @@ export async function getAccuracyTrend(
   userId: string,
   days: number = 30,
 ): Promise<AccuracyTrend[]> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  startDate.setHours(0, 0, 0, 0);
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
 
-  const practices = await prisma.recitationPractice.findMany({
-    where: {
-      userId,
-      practiceDate: {
-        gte: startDate,
-      },
-      accuracyScore: {
-        not: null,
-      },
-    },
-    orderBy: {
-      practiceDate: 'asc',
-    },
-  });
+    const practicesKey = `@salah_companion:recitation_practices:${userId}`;
+    const practicesJson = await AsyncStorage.getItem(practicesKey);
+    const allPractices: any[] = practicesJson ? JSON.parse(practicesJson) : [];
+
+    const practices = allPractices
+      .filter(p => {
+        const practiceDate = new Date(p.practiceDate || 0);
+        return practiceDate >= startDate && p.accuracyScore != null;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.practiceDate || 0).getTime();
+        const dateB = new Date(b.practiceDate || 0).getTime();
+        return dateA - dateB;
+      });
 
   // Group by date
   const dateMap = new Map<string, {accuracies: number[]; count: number}>();
 
   practices.forEach(practice => {
-    const dateKey = practice.practiceDate.toISOString().split('T')[0];
+    const dateKey = new Date(practice.practiceDate || 0).toISOString().split('T')[0];
     if (!dateMap.has(dateKey)) {
       dateMap.set(dateKey, {accuracies: [], count: 0});
     }
@@ -322,9 +338,9 @@ export async function getAccuracyTrend(
     }
   });
 
-  const trends: AccuracyTrend[] = [];
+    const trends: AccuracyTrend[] = [];
 
-  for (const [dateKey, data] of dateMap.entries()) {
+    for (const [dateKey, data] of dateMap.entries()) {
     const averageAccuracy =
       data.accuracies.length > 0
         ? data.accuracies.reduce((sum, acc) => sum + acc, 0) / data.accuracies.length
@@ -337,7 +353,11 @@ export async function getAccuracyTrend(
     });
   }
 
-  return trends.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return trends.sort((a, b) => a.date.getTime() - b.date.getTime());
+  } catch (error) {
+    console.error('Error getting accuracy trend:', error);
+    return [];
+  }
 }
 
 /**
@@ -346,60 +366,82 @@ export async function getAccuracyTrend(
 export async function getRecitationSummary(
   userId: string,
 ): Promise<RecitationSummary> {
-  const practices = await prisma.recitationPractice.findMany({
-    where: {
-      userId,
-    },
-  });
+  try {
+    // Get recitation practices from AsyncStorage
+    const practicesKey = `@salah_companion:recitation_practices:${userId}`;
+    const practicesJson = await AsyncStorage.getItem(practicesKey);
+    const practices: any[] = practicesJson ? JSON.parse(practicesJson) : [];
 
-  const accuracies = practices
-    .map(p => p.accuracyScore)
-    .filter((score): score is number => score !== null && score !== undefined)
-    .map(score => Number(score));
+    const accuracies = practices
+      .map(p => p.accuracyScore)
+      .filter((score): score is number => score !== null && score !== undefined)
+      .map(score => Number(score));
 
-  const averageAccuracy =
-    accuracies.length > 0
-      ? accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length
-      : 0;
+    const averageAccuracy =
+      accuracies.length > 0
+        ? accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length
+        : 0;
 
-  const totalMinutes = practices.reduce(
-    (sum, p) => sum + (p.durationSeconds || 0) / 60,
-    0,
-  );
+    const totalMinutes = practices.reduce(
+      (sum, p) => sum + (p.durationSeconds || 0) / 60,
+      0,
+    );
 
-  // Get unique surahs and ayahs practiced
-  const surahSet = new Set<number>();
-  const ayahSet = new Set<string>();
+    // Get unique surahs and ayahs practiced
+    const surahSet = new Set<number>();
+    const ayahSet = new Set<string>();
 
-  practices.forEach(practice => {
-    if (practice.feedbackData && typeof practice.feedbackData === 'object') {
-      const feedback = practice.feedbackData as any;
-      if (feedback.surahNumber) {
-        surahSet.add(feedback.surahNumber);
-        if (feedback.ayahNumber) {
-          ayahSet.add(`${feedback.surahNumber}:${feedback.ayahNumber}`);
+    practices.forEach(practice => {
+      if (practice.feedbackData && typeof practice.feedbackData === 'object') {
+        const feedback = practice.feedbackData as any;
+        if (feedback.surahNumber) {
+          surahSet.add(feedback.surahNumber);
+          if (feedback.ayahNumber) {
+            ayahSet.add(`${feedback.surahNumber}:${feedback.ayahNumber}`);
+          }
         }
       }
-    }
-  });
+    });
 
-  const [practiceFrequency, accuracyTrend, allSurahAnalytics] = await Promise.all([
-    getPracticeFrequency(userId),
-    getAccuracyTrend(userId, 30),
-    getAllSurahAnalytics(userId),
-  ]);
+    const [practiceFrequency, accuracyTrend, allSurahAnalytics] = await Promise.all([
+      getPracticeFrequency(userId).catch(() => ({
+        daily: 0,
+        weekly: 0,
+        monthly: 0,
+      })),
+      getAccuracyTrend(userId, 30).catch(() => []),
+      getAllSurahAnalytics(userId).catch(() => []),
+    ]);
 
-  const mostPracticedSurah =
-    allSurahAnalytics.length > 0 ? allSurahAnalytics[0] : null;
+    const mostPracticedSurah =
+      allSurahAnalytics.length > 0 ? allSurahAnalytics[0] : null;
 
-  return {
-    totalPractices: practices.length,
-    totalPracticeMinutes: Math.round(totalMinutes * 10) / 10,
-    averageAccuracy: Math.round(averageAccuracy * 100) / 100,
-    mostPracticedSurah,
-    practiceFrequency,
-    accuracyTrend,
-    surahsPracticed: surahSet.size,
-    ayahsPracticed: ayahSet.size,
-  };
+    return {
+      totalPractices: practices.length,
+      totalPracticeMinutes: Math.round(totalMinutes * 10) / 10,
+      averageAccuracy: Math.round(averageAccuracy * 100) / 100,
+      mostPracticedSurah,
+      practiceFrequency,
+      accuracyTrend,
+      surahsPracticed: surahSet.size,
+      ayahsPracticed: ayahSet.size,
+    };
+  } catch (error) {
+    console.error('Error getting recitation summary:', error);
+    // Return default values on error
+    return {
+      totalPractices: 0,
+      totalPracticeMinutes: 0,
+      averageAccuracy: 0,
+      mostPracticedSurah: null,
+      practiceFrequency: {
+        daily: 0,
+        weekly: 0,
+        monthly: 0,
+      },
+      accuracyTrend: [],
+      surahsPracticed: 0,
+      ayahsPracticed: 0,
+    };
+  }
 }

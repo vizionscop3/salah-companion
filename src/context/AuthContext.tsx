@@ -10,6 +10,9 @@ import {
   registerUser,
   logoutUser,
   getCurrentUser,
+  // TODO: Re-enable Google Sign-In after configuration
+  // signInWithGoogle,
+  // signOutFromGoogle,
   User,
   AuthResult,
 } from '@services/auth/authService';
@@ -20,6 +23,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (email: string, password: string, displayName?: string) => Promise<AuthResult>;
+  // TODO: Re-enable Google Sign-In after configuration
+  // loginWithGoogle: () => Promise<AuthResult>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -83,7 +88,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     return result;
   };
 
+  // TODO: Re-enable Google Sign-In after configuration
+  // const handleLoginWithGoogle = async (): Promise<AuthResult> => {
+  //   const result = await signInWithGoogle();
+  //   if (result.success && result.user) {
+  //     setUser(result.user);
+  //   }
+  //   return result;
+  // };
+
   const handleLogout = async () => {
+    // TODO: Re-enable Google Sign-In after configuration
+    // await signOutFromGoogle();
     await logoutUser();
     setUser(null);
   };
@@ -98,6 +114,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     isAuthenticated: user !== null,
     login: handleLogin,
     register: handleRegister,
+    // TODO: Re-enable Google Sign-In after configuration
+    // loginWithGoogle: handleLoginWithGoogle,
     logout: handleLogout,
     refreshUser,
   };

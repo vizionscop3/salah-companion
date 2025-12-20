@@ -13,7 +13,6 @@ import {useAuth} from '@context/AuthContext';
 import {spacing, typography, colors, elevation} from '@constants/theme';
 import {useNavigation} from '@react-navigation/native';
 import {updateUserProfile} from '@services/auth/authService';
-import {prisma} from '@services/database/prismaClient';
 
 const {width} = Dimensions.get('window');
 
@@ -80,17 +79,20 @@ export const OnboardingScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      // Mark onboarding as complete
-      await prisma.user.update({
-        where: {id: user.id},
-        data: {onboardingCompleted: true},
+      // Mark onboarding as complete using updateUserProfile
+      const updatedUser = await updateUserProfile(user.id, {
+        onboardingCompleted: true,
       });
 
-      // Refresh user data
-      await refreshUser();
+      if (updatedUser) {
+        // Refresh user data in context
+        await refreshUser();
 
-      // Navigate to main app
-      // Navigation will be handled by AppNavigator based on auth state
+        // Navigate to main app
+        // Navigation will be handled by AppNavigator based on auth state
+      } else {
+        console.error('Failed to update onboarding status');
+      }
     } catch (error) {
       console.error('Error completing onboarding:', error);
     } finally {

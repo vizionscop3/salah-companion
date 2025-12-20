@@ -48,7 +48,7 @@ curl http://localhost:8081/index.bundle?platform=android
 3. **Reload the app**:
    - Shake device → "Reload"
    - OR: Press `r` in Metro terminal
-   - OR: `adb shell input keyevent 82` then select "Reload"
+   - OR: ` then select "Reload"
 
 4. **Watch for errors** in the logcat output
 

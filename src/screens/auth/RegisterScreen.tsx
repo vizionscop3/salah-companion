@@ -7,7 +7,8 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {TextInput, Button, Card} from 'react-native-paper';
+import {TextInput, Button, Card, Divider} from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useTheme} from '@context/ThemeContext';
 import {useAuth} from '@context/AuthContext';
 import {spacing, typography, colors, elevation} from '@constants/theme';
@@ -16,6 +17,8 @@ import {useNavigation} from '@react-navigation/native';
 export const RegisterScreen: React.FC = () => {
   const {currentTheme} = useTheme();
   const {register, loading} = useAuth();
+  // TODO: Re-enable Google Sign-In after configuration
+  // const {register, loginWithGoogle, loading} = useAuth();
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,6 +51,16 @@ export const RegisterScreen: React.FC = () => {
     }
     // Navigation will be handled by AppNavigator based on auth state
   };
+
+  // TODO: Re-enable Google Sign-In after configuration
+  // const handleGoogleSignIn = async () => {
+  //   setError(null);
+  //   const result = await loginWithGoogle();
+  //   if (!result.success) {
+  //     setError(result.error || 'Google sign in failed');
+  //   }
+  //   // Navigation will be handled by AppNavigator based on auth state
+  // };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -138,6 +151,26 @@ export const RegisterScreen: React.FC = () => {
                 Create Account
               </Button>
 
+              {/* TODO: Re-enable Google Sign-In after configuration */}
+              {/* <View style={styles.dividerContainer}>
+                <Divider style={styles.divider} />
+                <Text style={[styles.dividerText, {color: currentTheme.colors.text}]}>OR</Text>
+                <Divider style={styles.divider} />
+              </View>
+
+              <Button
+                mode="outlined"
+                onPress={handleGoogleSignIn}
+                loading={loading}
+                disabled={loading}
+                style={styles.googleButton}
+                contentStyle={styles.googleButtonContent}
+                icon={() => (
+                  <MaterialCommunityIcons name="google" size={20} color={colors.primary.main} />
+                )}>
+                Sign up with Google
+              </Button> */}
+
               <View style={styles.loginLink}>
                 <Text style={[styles.loginText, {color: currentTheme.colors.text}]}>
                   Already have an account?{' '}
@@ -218,6 +251,28 @@ const styles = StyleSheet.create({
   },
   loginText: {
     ...typography.body2,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...typography.body2,
+    marginHorizontal: spacing.md,
+    opacity: 0.5,
+  },
+  googleButton: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+    borderColor: colors.primary.main,
+  },
+  googleButtonContent: {
+    paddingVertical: spacing.sm,
   },
 });
 

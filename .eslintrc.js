@@ -22,6 +22,7 @@ module.exports = {
       files: ['**/__tests__/**/*', '**/*.{test,spec}.*'],
       env: {
         jest: true,
+        'jest/globals': false,
       },
     },
   ],

@@ -3,9 +3,13 @@
  *
  * Manages achievement checking, unlocking, and progress tracking.
  * Integrates with analytics services to determine achievement eligibility.
+ * 
+ * NOTE: Prisma cannot run in React Native (Node.js only).
+ * This service uses AsyncStorage for local storage.
+ * TODO: Replace with proper backend API integration
  */
 
-import {prisma} from '@services/database/prismaClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ACHIEVEMENT_DEFINITIONS,
   type AchievementDefinition,
@@ -57,19 +61,14 @@ export async function checkAndUnlockAchievements(
       getPrayerRecords(userId).catch(() => []),
     ]);
 
-  // Get user's already unlocked achievements
-  const unlockedAchievements = await prisma.userAchievement.findMany({
-    where: {
-      userId,
-    },
-    include: {
-      achievement: true,
-    },
-  });
+  // Get user's already unlocked achievements from AsyncStorage
+  const achievementsKey = `@salah_companion:achievements:${userId}`;
+  const achievementsJson = await AsyncStorage.getItem(achievementsKey);
+  const unlockedAchievementKeys: string[] = achievementsJson
+    ? JSON.parse(achievementsJson)
+    : [];
 
-  const unlockedKeys = new Set(
-    unlockedAchievements.map(ua => ua.achievement.achievementKey),
-  );
+  const unlockedKeys = new Set(unlockedAchievementKeys);
 
   // Check each achievement definition
   for (const definition of ACHIEVEMENT_DEFINITIONS) {
@@ -172,54 +171,27 @@ async function unlockAchievement(
   userId: string,
   definition: AchievementDefinition,
 ): Promise<void> {
-  // First, ensure the achievement exists in the database
-  let achievement = await prisma.achievement.findUnique({
-    where: {
-      achievementKey: definition.achievementKey,
-    },
-  });
+  try {
+    // Get existing unlocked achievements
+    const achievementsKey = `@salah_companion:achievements:${userId}`;
+    const achievementsJson = await AsyncStorage.getItem(achievementsKey);
+    const unlockedAchievementKeys: string[] = achievementsJson
+      ? JSON.parse(achievementsJson)
+      : [];
 
-  if (!achievement) {
-    // Create the achievement if it doesn't exist
-    achievement = await prisma.achievement.create({
-      data: {
-        achievementKey: definition.achievementKey,
-        title: definition.title,
-        description: definition.description,
-        category: definition.category,
-        iconName: definition.iconName,
-        pointsAwarded: definition.pointsAwarded,
-        requirementType: definition.requirementType,
-        requirementValue: definition.requirementValue,
-        isPremium: definition.isPremium,
-      },
-    });
-  }
+    // Check if user already has this achievement
+    if (unlockedAchievementKeys.includes(definition.achievementKey)) {
+      return; // Already unlocked
+    }
 
-  // Check if user already has this achievement
-  const existing = await prisma.userAchievement.findUnique({
-    where: {
-      userId_achievementId: {
-        userId,
-        achievementId: achievement.id,
-      },
-    },
-  });
-
-  if (!existing) {
     // Unlock the achievement
-    await prisma.userAchievement.create({
-      data: {
-        userId,
-        achievementId: achievement.id,
-        progressData: {
-          unlockedAt: new Date().toISOString(),
-        },
-      },
-    });
+    unlockedAchievementKeys.push(definition.achievementKey);
+    await AsyncStorage.setItem(achievementsKey, JSON.stringify(unlockedAchievementKeys));
 
     // Update user's experience points
     await updateUserExperiencePoints(userId, definition.pointsAwarded);
+  } catch (error) {
+    console.error('Error unlocking achievement:', error);
   }
 }
 
@@ -230,27 +202,36 @@ async function updateUserExperiencePoints(
   userId: string,
   points: number,
 ): Promise<void> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
 
-  await prisma.userProgress.upsert({
-    where: {
-      userId_progressDate: {
+    // Get existing progress
+    const progressKey = `@salah_companion:user_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const allProgress: any[] = progressJson ? JSON.parse(progressJson) : [];
+
+    let todayProgress = allProgress.find((p: any) => p.progressDate === todayStr);
+
+    if (!todayProgress) {
+      todayProgress = {
         userId,
-        progressDate: today,
-      },
-    },
-    create: {
-      userId,
-      progressDate: today,
-      experiencePoints: points,
-    },
-    update: {
-      experiencePoints: {
-        increment: points,
-      },
-    },
-  });
+        progressDate: todayStr,
+        prayersCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        experiencePoints: points,
+      };
+      allProgress.push(todayProgress);
+    } else {
+      todayProgress.experiencePoints = (todayProgress.experiencePoints || 0) + points;
+    }
+
+    await AsyncStorage.setItem(progressKey, JSON.stringify(allProgress));
+  } catch (error) {
+    console.error('Error updating experience points:', error);
+  }
 }
 
 /**
@@ -265,18 +246,23 @@ export async function getUserAchievementsWithProgress(
       getRecitationSummary(userId).catch(() => null),
       getPronunciationSummary(userId).catch(() => null),
       getPrayerRecords(userId).catch(() => []),
-      prisma.userAchievement.findMany({
-        where: {
-          userId,
-        },
-        include: {
-          achievement: true,
-        },
-      }),
     ]);
 
+  // Get unlocked achievements from AsyncStorage
+  const achievementsKey = `@salah_companion:achievements:${userId}`;
+  const achievementsJson = await AsyncStorage.getItem(achievementsKey);
+  const unlockedAchievementKeys: string[] = achievementsJson
+    ? JSON.parse(achievementsJson)
+    : [];
+
   const unlockedMap = new Map(
-    unlockedAchievements.map(ua => [ua.achievement.achievementKey, ua]),
+    unlockedAchievementKeys.map(key => [
+      key,
+      {
+        achievement: {achievementKey: key},
+        unlockedAt: new Date(), // We don't store exact unlock time in AsyncStorage
+      },
+    ]),
   );
 
   const achievements: AchievementProgress[] = [];
@@ -302,7 +288,7 @@ export async function getUserAchievementsWithProgress(
       progress: progressPercent,
       requirementValue: definition.requirementValue,
       currentValue,
-      unlockedAt: unlocked ? unlocked.unlockedAt : undefined,
+      unlockedAt: unlocked ? (unlocked.unlockedAt as Date) : undefined,
     });
   }
 
@@ -383,25 +369,33 @@ function calculateAchievementProgress(
 export async function getUnlockedAchievements(
   userId: string,
 ): Promise<UnlockedAchievement[]> {
-  const unlocked = await prisma.userAchievement.findMany({
-    where: {
-      userId,
-    },
-    include: {
-      achievement: true,
-    },
-    orderBy: {
-      unlockedAt: 'desc',
-    },
-  });
+  try {
+    // Get unlocked achievement keys from AsyncStorage
+    const achievementsKey = `@salah_companion:achievements:${userId}`;
+    const achievementsJson = await AsyncStorage.getItem(achievementsKey);
+    const unlockedAchievementKeys: string[] = achievementsJson
+      ? JSON.parse(achievementsJson)
+      : [];
 
-  return unlocked.map(ua => ({
-    achievementKey: ua.achievement.achievementKey,
-    title: ua.achievement.title,
-    description: ua.achievement.description,
-    category: ua.achievement.category,
-    iconName: ua.achievement.iconName || 'trophy',
-    pointsAwarded: ua.achievement.pointsAwarded,
-    unlockedAt: ua.unlockedAt,
-  }));
+    // Map keys to achievement definitions
+    return unlockedAchievementKeys
+      .map(key => {
+        const definition = ACHIEVEMENT_DEFINITIONS.find(d => d.achievementKey === key);
+        if (!definition) return null;
+
+        return {
+          achievementKey: definition.achievementKey,
+          title: definition.title,
+          description: definition.description,
+          category: definition.category,
+          iconName: definition.iconName || 'trophy',
+          pointsAwarded: definition.pointsAwarded,
+          unlockedAt: new Date(), // We don't store exact unlock time in AsyncStorage
+        };
+      })
+      .filter((a): a is UnlockedAchievement => a !== null);
+  } catch (error) {
+    console.error('Error getting unlocked achievements:', error);
+    return [];
+  }
 }

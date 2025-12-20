@@ -64,7 +64,9 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true})
       // Request location permission
       const hasPermission = await requestLocationPermission();
       if (!hasPermission) {
-        throw new Error('Location permission denied');
+        setError('Location permission is required to show Qibla direction. Please enable location access in settings.');
+        setLoading(false);
+        return; // Don't throw - just show error message
       }
 
       // Get current location
@@ -95,7 +97,8 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true})
         err instanceof Error ? err.message : 'Failed to initialize compass';
       setError(errorMessage);
       setLoading(false);
-      console.error('Compass initialization error:', err);
+      // Don't log as error - this is expected if permission is denied
+      console.warn('Compass initialization warning:', err);
     }
   };
 

@@ -1,63 +1,30 @@
 /**
  * Progress Integration Tests
  *
- * Tests the integration between progress service and database
+ * Tests the integration between progress service and AsyncStorage
+ * NOTE: Updated to use AsyncStorage instead of Prisma
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   recordPrayerCompletion,
   getTodayProgress,
   getPrayerRecords,
 } from '@services/progress/progressService';
-import {prisma} from '@services/database/prismaClient';
-
-// Mock Prisma
-jest.mock('@services/database/prismaClient');
 
 describe('Progress Integration', () => {
   const mockUserId = 'test-user-123';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Clear AsyncStorage before each test
+    await AsyncStorage.clear();
     jest.clearAllMocks();
   });
 
   describe('Complete prayer flow', () => {
     it('records prayer and updates progress in sequence', async () => {
-      // Mock: No existing records
-      (prisma.prayerRecord.findMany as jest.Mock).mockResolvedValueOnce([]);
-      (prisma.prayerRecord.findFirst as jest.Mock).mockResolvedValueOnce(null);
-
-      // Mock: Create prayer record
-      (prisma.prayerRecord.create as jest.Mock).mockResolvedValueOnce({
-        id: 'prayer-1',
-        userId: mockUserId,
-        prayerName: 'fajr',
-        prayerDate: today,
-      });
-
-      // Mock: Upsert progress (first prayer of the day)
-      (prisma.userProgress.upsert as jest.Mock).mockResolvedValueOnce({
-        id: 'progress-1',
-        userId: mockUserId,
-        progressDate: today,
-        prayersCompleted: 1,
-        currentStreak: 1,
-        longestStreak: 1,
-      });
-
-      // Mock: Find records for streak calculation
-      (prisma.prayerRecord.findMany as jest.Mock).mockResolvedValueOnce([
-        {id: 'prayer-1'},
-      ]);
-      (prisma.prayerRecord.findFirst as jest.Mock).mockResolvedValueOnce({
-        id: 'prayer-1',
-      });
-
-      // Mock: Update progress with streak
-      (prisma.userProgress.update as jest.Mock).mockResolvedValueOnce({});
-
       // Record prayer
       await recordPrayerCompletion({
         userId: mockUserId,
@@ -67,36 +34,32 @@ describe('Progress Integration', () => {
       });
 
       // Verify prayer was recorded
-      expect(prisma.prayerRecord.create).toHaveBeenCalled();
-      expect(prisma.userProgress.upsert).toHaveBeenCalled();
+      const progress = await getTodayProgress(mockUserId);
+      expect(progress.prayersCompleted).toBe(1);
+      expect(progress.currentStreak).toBeGreaterThanOrEqual(1);
+
+      // Verify prayer record exists
+      const records = await getPrayerRecords(mockUserId);
+      expect(records.length).toBeGreaterThan(0);
+      expect(records[0].prayerName).toBe('fajr');
     });
 
     it('tracks multiple prayers in a day', async () => {
-      // Mock: Get today's progress (2 prayers already completed)
-      (prisma.prayerRecord.findMany as jest.Mock)
-        .mockResolvedValueOnce([
-          {id: 'prayer-1', prayerName: 'fajr'},
-          {id: 'prayer-2', prayerName: 'dhuhr'},
-        ])
-        .mockResolvedValueOnce([
-          {id: 'prayer-1'},
-          {id: 'prayer-2'},
-        ]);
-
-      (prisma.prayerRecord.findFirst as jest.Mock).mockResolvedValueOnce({
-        id: 'prayer-2',
+      // Record first prayer
+      await recordPrayerCompletion({
+        userId: mockUserId,
+        prayerName: 'fajr',
+        prayerDate: today,
+        prayerTime: new Date(today.setHours(6, 0, 0, 0)),
       });
 
-      (prisma.prayerRecord.create as jest.Mock).mockResolvedValueOnce({
-        id: 'prayer-3',
+      // Record second prayer
+      await recordPrayerCompletion({
+        userId: mockUserId,
+        prayerName: 'dhuhr',
+        prayerDate: today,
+        prayerTime: new Date(today.setHours(12, 30, 0, 0)),
       });
-
-      (prisma.userProgress.upsert as jest.Mock).mockResolvedValueOnce({
-        id: 'progress-1',
-        prayersCompleted: 3,
-      });
-
-      (prisma.userProgress.update as jest.Mock).mockResolvedValueOnce({});
 
       // Record third prayer
       await recordPrayerCompletion({
@@ -108,7 +71,7 @@ describe('Progress Integration', () => {
 
       // Verify progress shows 3 prayers
       const progress = await getTodayProgress(mockUserId);
-      expect(progress.prayersCompleted).toBe(2); // From mocked findMany
+      expect(progress.prayersCompleted).toBe(3);
     });
   });
 
@@ -117,24 +80,15 @@ describe('Progress Integration', () => {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
 
-      // Mock: Today has prayers
-      (prisma.prayerRecord.findFirst as jest.Mock)
-        .mockResolvedValueOnce({id: 'today-prayer'}) // Today
-        .mockResolvedValueOnce({id: 'yesterday-prayer'}); // Yesterday
-
-      (prisma.prayerRecord.findMany as jest.Mock).mockResolvedValueOnce([
-        {id: 'today-prayer'},
-      ]);
-
-      (prisma.userProgress.upsert as jest.Mock).mockResolvedValueOnce({
-        id: 'progress-1',
-        currentStreak: 1,
+      // Record prayer yesterday
+      await recordPrayerCompletion({
+        userId: mockUserId,
+        prayerName: 'fajr',
+        prayerDate: yesterday,
+        prayerTime: new Date(yesterday.setHours(6, 0, 0, 0)),
       });
 
-      (prisma.userProgress.update as jest.Mock).mockResolvedValueOnce({
-        currentStreak: 2, // Streak continues
-      });
-
+      // Record prayer today
       await recordPrayerCompletion({
         userId: mockUserId,
         prayerName: 'fajr',
@@ -142,14 +96,9 @@ describe('Progress Integration', () => {
         prayerTime: new Date(today.setHours(6, 0, 0, 0)),
       });
 
-      // Streak should be calculated and updated
-      expect(prisma.userProgress.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            currentStreak: expect.any(Number),
-          }),
-        }),
-      );
+      // Verify streak is maintained
+      const progress = await getTodayProgress(mockUserId);
+      expect(progress.currentStreak).toBeGreaterThanOrEqual(2);
     });
   });
 });
