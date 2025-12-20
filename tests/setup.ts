@@ -16,22 +16,90 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 
 // Mock react-native-sound
-jest.mock('react-native-sound', () => ({
-  setCategory: jest.fn(),
-  setIsEnabled: jest.fn(),
-  enable: jest.fn(),
-  enableInSilentMode: jest.fn(),
-  enableAsync: jest.fn(),
-  enableInSilentModeAsync: jest.fn(),
-  setActive: jest.fn(),
-  setActiveAsync: jest.fn(),
-  setMode: jest.fn(),
-  setModeAsync: jest.fn(),
-  setSpeakerphoneOn: jest.fn(),
-  setSpeakerphoneOnAsync: jest.fn(),
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  removeAllListeners: jest.fn(),
-  removeSubscription: jest.fn(),
+jest.mock('react-native-sound', () => {
+  return jest.fn().mockImplementation((source: string, basePath: string, callback?: (error: Error | null) => void) => {
+    const sound: any = {
+      play: jest.fn((callback?: (success: boolean) => void) => {
+        if (callback) {
+          callback(true);
+        }
+        return sound;
+      }),
+      stop: jest.fn(() => sound),
+      release: jest.fn(() => sound),
+      setVolume: jest.fn(() => sound),
+      isPlaying: jest.fn(() => false),
+    };
+    if (callback) {
+      callback(null);
+    }
+    return sound;
+  });
+});
+
+// Mock react-native-fs to avoid NativeEventEmitter errors in tests
+jest.mock('react-native-fs', () => {
+  const fs = {
+    DocumentDirectoryPath: '/tmp',
+    exists: jest.fn(async () => true),
+    mkdir: jest.fn(async () => true),
+    unlink: jest.fn(async () => true),
+    readdir: jest.fn(async () => []),
+    stat: jest.fn(async () => ({size: 0})),
+    downloadFile: jest.fn(() => ({
+      promise: Promise.resolve({statusCode: 200}),
+    })),
+  };
+  return fs;
+});
+
+// Mock Prisma Client
+jest.mock('@services/database/prismaClient', () => ({
+  prisma: {
+    prayerRecord: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+    },
+    userProgress: {
+      findFirst: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+      findMany: jest.fn(),
+    },
+    userAchievement: {
+      count: jest.fn(),
+    },
+  },
+}));
+
+// Mock react-native-push-notification
+jest.mock('react-native-push-notification', () => ({
+  configure: jest.fn(),
+  localNotificationSchedule: jest.fn(),
+  cancelLocalNotifications: jest.fn(),
+  cancelAllLocalNotifications: jest.fn(),
+}));
+
+// Mock @react-native-community/geolocation
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn((success) => {
+    success({
+      coords: {
+        latitude: 40.7128,
+        longitude: -74.006,
+        accuracy: 10,
+        altitude: null,
+        heading: null,
+        speed: null,
+      },
+      timestamp: Date.now(),
+    });
+  }),
+  watchPosition: jest.fn(),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+  setConfiguration: jest.fn(),
+  requestAuthorization: jest.fn(),
 }));
 

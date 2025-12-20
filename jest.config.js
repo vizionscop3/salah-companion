@@ -4,8 +4,11 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testMatch: ['**/__tests__/**/*.(ts|tsx|js)', '**/*.(test|spec).(ts|tsx|js)'],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': ['babel-jest', {presets: ['module:@react-native/babel-preset']}],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@react-native-community|@prisma)/)',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -16,6 +19,7 @@ module.exports = {
     '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '^@context/(.*)$': '<rootDir>/src/context/$1',
     '^@constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^@tests/(.*)$': '<rootDir>/tests/$1',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

@@ -75,6 +75,10 @@ export const LearningScreen: React.FC = () => {
                     (navigation as any).navigate('GuidedSalah', {
                       prayer: 'fajr',
                     });
+                  } else if (module.type === 'pronunciation') {
+                    (navigation as any).navigate('PronunciationAcademy');
+                  } else if (module.type === 'recitation') {
+                    (navigation as any).navigate('RecitationPractice');
                   } else {
                     // Other modules - to be implemented
                     console.log('Opening:', module.type);

@@ -26,6 +26,8 @@ import {
   SalahStep,
 } from '@services/salah/guidedSalahService';
 import {PrayerName} from '@services/prayer/prayerTimeService';
+import {audioService} from '@services/audio/audioService';
+import {isQuranicRecitation} from '@services/audio/audioMapping';
 
 interface GuidedSalahScreenProps {
   route?: {
@@ -43,11 +45,20 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
   const [guide, setGuide] = useState<PrayerGuide | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const prayerGuide = getPrayerGuide(prayer);
     setGuide(prayerGuide);
     setCurrentStepIndex(0);
+    
+    // Initialize audio service
+    audioService.initialize();
+    
+    // Cleanup on unmount
+    return () => {
+      audioService.stopAudio();
+    };
   }, [prayer]);
 
   const currentStep = guide
@@ -70,10 +81,37 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
     }
   };
 
-  const handlePlayAudio = () => {
-    // TODO: Implement audio playback
-    setIsPlaying(true);
-    setTimeout(() => setIsPlaying(false), 2000);
+  const handlePlayAudio = async () => {
+    if (!currentStep) return;
+
+    try {
+      setIsLoading(true);
+      setIsPlaying(true);
+
+      // Check if this is a Quranic recitation that can use API
+      const useApi = isQuranicRecitation(currentStep.id);
+
+      // Play audio (will use API if available, fallback to local)
+      await audioService.playAudio(
+        currentStep.id,
+        80,
+        () => {
+          setIsPlaying(false);
+          setIsLoading(false);
+        },
+        useApi, // Enable API for Quranic recitations
+      );
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleStopAudio = () => {
+    audioService.stopAudio();
+    setIsPlaying(false);
+    setIsLoading(false);
   };
 
   if (!guide || !currentStep) {
@@ -142,14 +180,19 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
               </View>
             )}
 
-            {currentStep.audioUrl && (
+            {(currentStep.audioUrl || currentStep.arabic) && (
               <Button
                 mode="contained"
-                onPress={handlePlayAudio}
-                icon={isPlaying ? 'pause' : 'play'}
+                onPress={isPlaying ? handleStopAudio : handlePlayAudio}
+                icon={isPlaying ? 'stop' : 'play'}
                 style={styles.audioButton}
-                loading={isPlaying}>
-                {isPlaying ? 'Playing...' : 'Play Audio'}
+                loading={isLoading}
+                disabled={isLoading}>
+                {isLoading
+                  ? 'Loading...'
+                  : isPlaying
+                  ? 'Stop Audio'
+                  : 'Play Audio'}
               </Button>
             )}
           </Card.Content>

@@ -119,4 +119,3 @@ Your repository is now:
 ---
 
 **Congratulations!** Your Salah Companion repository is now professionally set up on GitHub! 🎊
-

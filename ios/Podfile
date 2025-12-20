@@ -59,20 +59,37 @@ target 'SalahCompanion' do
     end
     
     # Fix RCT-Folly clockid_t typedef redefinition error with newer iOS SDK
-    # Patch folly/portability/Time.h to guard clockid_t typedef
+    # Patch folly/portability/Time.h - Better approach: Check for __APPLE__ and use different guard
     begin
-      folly_time_h = File.join(installer.sandbox.root, 'Headers/Private/RCT-Folly/folly/portability/Time.h')
-      if File.exist?(folly_time_h)
-        file_content = File.read(folly_time_h)
-        # Only patch if not already patched
-        unless file_content.include?('#ifndef clockid_t')
-          patched_content = file_content.gsub(
-            /typedef uint8_t clockid_t;/,
-            "#ifndef clockid_t\ntypedef uint8_t clockid_t;\n#endif"
-          )
-          if file_content != patched_content
-            File.write(folly_time_h, patched_content)
-            puts "✅ Patched RCT-Folly Time.h to fix clockid_t redefinition"
+      # Try both possible locations
+      possible_paths = [
+        File.join(installer.sandbox.root, 'Headers/Private/RCT-Folly/folly/portability/Time.h'),
+        File.join(installer.sandbox.root, 'RCT-Folly/folly/portability/Time.h'),
+      ]
+      
+      possible_paths.each do |folly_time_h|
+        if File.exist?(folly_time_h)
+          file_content = File.read(folly_time_h)
+          # Check if we need to patch (if typedef exists without proper guard for Apple)
+          if file_content.include?('typedef uint8_t clockid_t') && 
+             !file_content.include?('#if !defined(__APPLE__)')
+            # Replace the typedef section with Apple-aware guard
+            patched_content = file_content.gsub(
+              /#ifndef clockid_t\ntypedef uint8_t clockid_t;\n#endif/,
+              "#if !defined(__APPLE__)\n#ifndef clockid_t\ntypedef uint8_t clockid_t;\n#endif\n#endif"
+            )
+            # Also handle case where guard might not exist at all
+            if patched_content == file_content
+              patched_content = file_content.gsub(
+                /typedef uint8_t clockid_t;/,
+                "#if !defined(__APPLE__)\n#ifndef clockid_t\ntypedef uint8_t clockid_t;\n#endif\n#endif"
+              )
+            end
+            if file_content != patched_content
+              File.write(folly_time_h, patched_content)
+              puts "✅ Patched RCT-Folly Time.h to fix clockid_t redefinition (Apple-aware)"
+              break
+            end
           end
         end
       end

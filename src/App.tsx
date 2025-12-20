@@ -13,6 +13,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {PaperProvider} from 'react-native-paper';
 
 import {ThemeProvider} from '@context/ThemeContext';
+import {AuthProvider} from '@context/AuthContext';
 import {AppNavigator} from '@screens/navigation/AppNavigator';
 import {theme} from '@constants/theme';
 import {initializeNotifications} from '@services/notifications/notificationService';
@@ -29,15 +30,17 @@ const App: React.FC = () => {
     <GestureHandlerRootView style={{flex: 1}}>
       <SafeAreaProvider>
         <PaperProvider theme={theme.light}>
-          <ThemeProvider>
-            <NavigationContainer>
-              <StatusBar
-                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                backgroundColor={theme.light.colors.primary}
-              />
-              <AppNavigator />
-            </NavigationContainer>
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <NavigationContainer>
+                <StatusBar
+                  barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                  backgroundColor={theme.light.colors.primary}
+                />
+                <AppNavigator />
+              </NavigationContainer>
+            </ThemeProvider>
+          </AuthProvider>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

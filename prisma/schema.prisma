@@ -6,50 +6,51 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  passwordHash          String    @map("password_hash")
-  displayName           String?   @map("display_name")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  lastLogin             DateTime? @map("last_login")
-  isActive              Boolean   @default(true) @map("is_active")
-  subscriptionTier      String    @default("free") @map("subscription_tier") // free, premium
-  subscriptionExpiresAt DateTime? @map("subscription_expires_at")
-  onboardingCompleted   Boolean   @default(false) @map("onboarding_completed")
-  learningLevel         Int       @default(1) @map("learning_level") // 1-5
-  preferredLanguage     String    @default("en") @map("preferred_language")
-  timezone              String?
-  locationLatitude      Decimal?  @map("location_latitude") @db.Decimal(10, 8)
-  locationLongitude     Decimal?  @map("location_longitude") @db.Decimal(11, 8)
-  locationCity          String?   @map("location_city")
-  locationCountry       String?   @map("location_country")
-  prayerCalculationMethod String  @default("MWL") @map("prayer_calculation_method")
-  asrCalculationMethod  String    @default("Shafi") @map("asr_calculation_method") // Shafi, Hanafi
-  highLatitudeMethod    String?   @map("high_latitude_method")
-  fajrAngle             Decimal?  @map("fajr_angle") @db.Decimal(5, 2)
-  ishaAngle             Decimal?  @map("isha_angle") @db.Decimal(5, 2)
-  mfaEnabled            Boolean   @default(false) @map("mfa_enabled")
-  mfaSecret             String?   @map("mfa_secret")
-  recoveryCodes         String[]  @map("recovery_codes")
-  privacySettings       Json      @default("{}") @map("privacy_settings")
-  accessibilitySettings Json      @default("{}") @map("accessibility_settings")
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  passwordHash            String    @map("password_hash")
+  displayName             String?   @map("display_name")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  lastLogin               DateTime? @map("last_login")
+  isActive                Boolean   @default(true) @map("is_active")
+  subscriptionTier        String    @default("free") @map("subscription_tier") // free, premium
+  subscriptionExpiresAt   DateTime? @map("subscription_expires_at")
+  onboardingCompleted     Boolean   @default(false) @map("onboarding_completed")
+  learningLevel           Int       @default(1) @map("learning_level") // 1-5
+  preferredLanguage       String    @default("en") @map("preferred_language")
+  timezone                String?
+  locationLatitude        Decimal?  @map("location_latitude") @db.Decimal(10, 8)
+  locationLongitude       Decimal?  @map("location_longitude") @db.Decimal(11, 8)
+  locationCity            String?   @map("location_city")
+  locationCountry         String?   @map("location_country")
+  prayerCalculationMethod String    @default("MWL") @map("prayer_calculation_method")
+  asrCalculationMethod    String    @default("Shafi") @map("asr_calculation_method") // Shafi, Hanafi
+  highLatitudeMethod      String?   @map("high_latitude_method")
+  fajrAngle               Decimal?  @map("fajr_angle") @db.Decimal(5, 2)
+  ishaAngle               Decimal?  @map("isha_angle") @db.Decimal(5, 2)
+  mfaEnabled              Boolean   @default(false) @map("mfa_enabled")
+  mfaSecret               String?   @map("mfa_secret")
+  recoveryCodes           String[]  @map("recovery_codes")
+  privacySettings         Json      @default("{}") @map("privacy_settings")
+  accessibilitySettings   Json      @default("{}") @map("accessibility_settings")
 
   // Relations
-  userSettings        UserSettings?
-  prayerRecords       PrayerRecord[]
-  prayerNotifications PrayerNotification[]
-  recitationPractice  RecitationPractice[]
-  userProgress        UserProgress[]
-  userAchievements    UserAchievement[]
-  subscriptions       Subscription[]
-  familyMembers       FamilyMember[]
+  userSettings          UserSettings?
+  prayerRecords         PrayerRecord[]
+  prayerNotifications   PrayerNotification[]
+  recitationPractice    RecitationPractice[]
+  userProgress          UserProgress[]
+  userAchievements      UserAchievement[]
+  subscriptions         Subscription[]
+  familyMembers         FamilyMember[]
+  pronunciationProgress PronunciationProgress[]
 
   @@index([email])
   @@index([subscriptionTier, subscriptionExpiresAt])
@@ -58,24 +59,24 @@ model User {
 }
 
 model UserSettings {
-  id                      String   @id @default(uuid())
-  userId                  String   @unique @map("user_id")
-  azanVoice               String   @default("makkah") @map("azan_voice")
-  azanVolume              Int      @default(80) @map("azan_volume")
-  azanFadeIn              Boolean  @default(true) @map("azan_fade_in")
-  azanDndOverride         Boolean  @default(false) @map("azan_dnd_override")
-  azanVibration           Boolean  @default(true) @map("azan_vibration")
-  notificationEnabled     Boolean  @default(true) @map("notification_enabled")
-  notificationSound       Boolean  @default(true) @map("notification_sound")
-  darkMode                Boolean  @default(false) @map("dark_mode")
-  fontSize                String   @default("medium") @map("font_size")
-  dyslexiaFont            Boolean  @default(false) @map("dyslexia_font")
-  highContrast            Boolean  @default(false) @map("high_contrast")
-  audioSpeed              Decimal  @default(1.0) @map("audio_speed") @db.Decimal(3, 2)
-  recitationFeedbackEnabled Boolean @default(true) @map("recitation_feedback_enabled")
-  gamificationEnabled     Boolean  @default(true) @map("gamification_enabled")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  id                        String   @id @default(uuid())
+  userId                    String   @unique @map("user_id")
+  azanVoice                 String   @default("makkah") @map("azan_voice")
+  azanVolume                Int      @default(80) @map("azan_volume")
+  azanFadeIn                Boolean  @default(true) @map("azan_fade_in")
+  azanDndOverride           Boolean  @default(false) @map("azan_dnd_override")
+  azanVibration             Boolean  @default(true) @map("azan_vibration")
+  notificationEnabled       Boolean  @default(true) @map("notification_enabled")
+  notificationSound         Boolean  @default(true) @map("notification_sound")
+  darkMode                  Boolean  @default(false) @map("dark_mode")
+  fontSize                  String   @default("medium") @map("font_size")
+  dyslexiaFont              Boolean  @default(false) @map("dyslexia_font")
+  highContrast              Boolean  @default(false) @map("high_contrast")
+  audioSpeed                Decimal  @default(1.0) @map("audio_speed") @db.Decimal(3, 2)
+  recitationFeedbackEnabled Boolean  @default(true) @map("recitation_feedback_enabled")
+  gamificationEnabled       Boolean  @default(true) @map("gamification_enabled")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -84,18 +85,18 @@ model UserSettings {
 }
 
 model PrayerTime {
-  id                  String   @id @default(uuid())
-  date                DateTime @db.Date
-  latitude            Decimal  @db.Decimal(10, 8)
-  longitude           Decimal  @db.Decimal(11, 8)
-  calculationMethod   String   @map("calculation_method")
-  fajrTime            DateTime @db.Time @map("fajr_time")
-  sunriseTime         DateTime @db.Time @map("sunrise_time")
-  dhuhrTime           DateTime @db.Time @map("dhuhr_time")
-  asrTime             DateTime @db.Time @map("asr_time")
-  maghribTime         DateTime @db.Time @map("maghrib_time")
-  ishaTime            DateTime @db.Time @map("isha_time")
-  createdAt           DateTime @default(now()) @map("created_at")
+  id                String   @id @default(uuid())
+  date              DateTime @db.Date
+  latitude          Decimal  @db.Decimal(10, 8)
+  longitude         Decimal  @db.Decimal(11, 8)
+  calculationMethod String   @map("calculation_method")
+  fajrTime          DateTime @map("fajr_time") @db.Time
+  sunriseTime       DateTime @map("sunrise_time") @db.Time
+  dhuhrTime         DateTime @map("dhuhr_time") @db.Time
+  asrTime           DateTime @map("asr_time") @db.Time
+  maghribTime       DateTime @map("maghrib_time") @db.Time
+  ishaTime          DateTime @map("isha_time") @db.Time
+  createdAt         DateTime @default(now()) @map("created_at")
 
   @@unique([date, latitude, longitude, calculationMethod])
   @@index([latitude, longitude, date])
@@ -104,19 +105,19 @@ model PrayerTime {
 }
 
 model PrayerRecord {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  prayerName      String    @map("prayer_name") // fajr, dhuhr, asr, maghrib, isha, etc.
-  prayerDate      DateTime  @db.Date @map("prayer_date")
-  prayerTime      DateTime  @map("prayer_time")
-  completedAt     DateTime  @default(now()) @map("completed_at")
-  wasGuided       Boolean   @default(true) @map("was_guided")
-  wasOnTime       Boolean?  @map("was_on_time")
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  prayerName      String   @map("prayer_name") // fajr, dhuhr, asr, maghrib, isha, etc.
+  prayerDate      DateTime @map("prayer_date") @db.Date
+  prayerTime      DateTime @map("prayer_time")
+  completedAt     DateTime @default(now()) @map("completed_at")
+  wasGuided       Boolean  @default(true) @map("was_guided")
+  wasOnTime       Boolean? @map("was_on_time")
   rakAhsCompleted Int      @default(0) @map("rak_ahs_completed")
-  sunnahBefore    Boolean   @default(false) @map("sunnah_before")
-  sunnahAfter     Boolean   @default(false) @map("sunnah_after")
+  sunnahBefore    Boolean  @default(false) @map("sunnah_before")
+  sunnahAfter     Boolean  @default(false) @map("sunnah_after")
   notes           String?
-  createdAt       DateTime  @default(now()) @map("created_at")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -127,15 +128,15 @@ model PrayerRecord {
 }
 
 model PrayerNotification {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  prayerName      String    @map("prayer_name")
-  scheduledTime   DateTime  @map("scheduled_time")
-  sentAt          DateTime? @map("sent_at")
-  openedAt        DateTime? @map("opened_at")
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  prayerName       String    @map("prayer_name")
+  scheduledTime    DateTime  @map("scheduled_time")
+  sentAt           DateTime? @map("sent_at")
+  openedAt         DateTime? @map("opened_at")
   notificationType String    @default("azan") @map("notification_type") // azan, reminder, iqamah
-  status          String    @default("pending") @map("status") // pending, sent, opened, failed
-  createdAt       DateTime  @default(now()) @map("created_at")
+  status           String    @default("pending") @map("status") // pending, sent, opened, failed
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -145,18 +146,18 @@ model PrayerNotification {
 }
 
 model Surah {
-  id              String   @id @default(uuid())
-  surahNumber     Int      @unique @map("surah_number")
-  arabicName      String   @map("arabic_name")
-  transliteratedName String @map("transliterated_name")
-  englishName     String   @map("english_name")
-  numberOfAyahs   Int      @map("number_of_ayahs")
-  revelationType  String   @map("revelation_type") // meccan, medinan
-  juzNumber       Int?     @map("juz_number")
-  isShortSurah    Boolean  @default(false) @map("is_short_surah")
-  isInJuzAmma     Boolean  @default(false) @map("is_in_juz_amma")
-  audioUrl        String?  @map("audio_url")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid())
+  surahNumber        Int      @unique @map("surah_number")
+  arabicName         String   @map("arabic_name")
+  transliteratedName String   @map("transliterated_name")
+  englishName        String   @map("english_name")
+  numberOfAyahs      Int      @map("number_of_ayahs")
+  revelationType     String   @map("revelation_type") // meccan, medinan
+  juzNumber          Int?     @map("juz_number")
+  isShortSurah       Boolean  @default(false) @map("is_short_surah")
+  isInJuzAmma        Boolean  @default(false) @map("is_in_juz_amma")
+  audioUrl           String?  @map("audio_url")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   ayahs Ayah[]
 
@@ -169,9 +170,9 @@ model Ayah {
   id                  String   @id @default(uuid())
   surahId             String   @map("surah_id")
   ayahNumber          Int      @map("ayah_number")
-  arabicText          String   @db.Text @map("arabic_text")
+  arabicText          String   @map("arabic_text") @db.Text
   transliteration     String?  @db.Text
-  englishTranslation  String?  @db.Text @map("english_translation")
+  englishTranslation  String?  @map("english_translation") @db.Text
   wordByWordBreakdown Json?    @map("word_by_word_breakdown")
   audioUrl            String?  @map("audio_url")
   createdAt           DateTime @default(now()) @map("created_at")
@@ -184,21 +185,21 @@ model Ayah {
 }
 
 model RecitationPractice {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  surahId         String?   @map("surah_id")
-  ayahId          String?   @map("ayah_id")
-  practiceMode    String    @map("practice_mode") // word, ayah, surah
-  audioRecordingUrl String? @map("audio_recording_url") // Local storage reference
-  accuracyScore   Decimal?  @map("accuracy_score") @db.Decimal(5, 2)
-  tajweedScore    Decimal?  @map("tajweed_score") @db.Decimal(5, 2)
-  feedbackData    Json?     @map("feedback_data")
-  phonemeAnalysis Json?     @map("phoneme_analysis")
-  practiceDate    DateTime  @default(now()) @map("practice_date")
-  durationSeconds Int?      @map("duration_seconds")
-  attemptsCount   Int       @default(1) @map("attempts_count")
-  isOffline       Boolean   @default(false) @map("is_offline")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  surahId           String?  @map("surah_id")
+  ayahId            String?  @map("ayah_id")
+  practiceMode      String   @map("practice_mode") // word, ayah, surah
+  audioRecordingUrl String?  @map("audio_recording_url") // Local storage reference
+  accuracyScore     Decimal? @map("accuracy_score") @db.Decimal(5, 2)
+  tajweedScore      Decimal? @map("tajweed_score") @db.Decimal(5, 2)
+  feedbackData      Json?    @map("feedback_data")
+  phonemeAnalysis   Json?    @map("phoneme_analysis")
+  practiceDate      DateTime @default(now()) @map("practice_date")
+  durationSeconds   Int?     @map("duration_seconds")
+  attemptsCount     Int      @default(1) @map("attempts_count")
+  isOffline         Boolean  @default(false) @map("is_offline")
+  createdAt         DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -208,21 +209,21 @@ model RecitationPractice {
 }
 
 model UserProgress {
-  id                      String   @id @default(uuid())
-  userId                  String   @map("user_id")
-  progressDate            DateTime @db.Date @map("progress_date")
-  prayersCompleted       Int      @default(0) @map("prayers_completed")
-  currentStreak           Int      @default(0) @map("current_streak")
-  longestStreak           Int      @default(0) @map("longest_streak")
-  surahsMemorized        Int      @default(0) @map("surahs_memorized")
-  practiceSessions       Int      @default(0) @map("practice_sessions")
-  totalPracticeMinutes   Int      @default(0) @map("total_practice_minutes")
-  pronunciationImprovement Decimal @default(0) @map("pronunciation_improvement") @db.Decimal(5, 2)
-  achievementsUnlocked   Int      @default(0) @map("achievements_unlocked")
-  level                  Int      @default(1)
-  experiencePoints       Int      @default(0) @map("experience_points")
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  id                       String   @id @default(uuid())
+  userId                   String   @map("user_id")
+  progressDate             DateTime @map("progress_date") @db.Date
+  prayersCompleted         Int      @default(0) @map("prayers_completed")
+  currentStreak            Int      @default(0) @map("current_streak")
+  longestStreak            Int      @default(0) @map("longest_streak")
+  surahsMemorized          Int      @default(0) @map("surahs_memorized")
+  practiceSessions         Int      @default(0) @map("practice_sessions")
+  totalPracticeMinutes     Int      @default(0) @map("total_practice_minutes")
+  pronunciationImprovement Decimal  @default(0) @map("pronunciation_improvement") @db.Decimal(5, 2)
+  achievementsUnlocked     Int      @default(0) @map("achievements_unlocked")
+  level                    Int      @default(1)
+  experiencePoints         Int      @default(0) @map("experience_points")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -233,17 +234,17 @@ model UserProgress {
 }
 
 model Achievement {
-  id              String   @id @default(uuid())
-  achievementKey  String   @unique @map("achievement_key")
-  title           String
-  description     String   @db.Text
-  category        String   // prayer, learning, recitation, consistency
-  iconName        String?  @map("icon_name")
-  pointsAwarded   Int      @default(0) @map("points_awarded")
-  requirementType String   @map("requirement_type") // streak, count, accuracy, etc.
+  id               String   @id @default(uuid())
+  achievementKey   String   @unique @map("achievement_key")
+  title            String
+  description      String   @db.Text
+  category         String // prayer, learning, recitation, consistency
+  iconName         String?  @map("icon_name")
+  pointsAwarded    Int      @default(0) @map("points_awarded")
+  requirementType  String   @map("requirement_type") // streak, count, accuracy, etc.
   requirementValue Int?
-  isPremium       Boolean  @default(false) @map("is_premium")
-  createdAt       DateTime @default(now()) @map("created_at")
+  isPremium        Boolean  @default(false) @map("is_premium")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   userAchievements UserAchievement[]
 
@@ -253,13 +254,13 @@ model Achievement {
 }
 
 model UserAchievement {
-  id            String    @id @default(uuid())
-  userId        String    @map("user_id")
-  achievementId String    @map("achievement_id")
-  unlockedAt    DateTime  @default(now()) @map("unlocked_at")
-  progressData  Json?     @map("progress_data")
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+  progressData  Json?    @map("progress_data")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   @@unique([userId, achievementId])
@@ -269,19 +270,19 @@ model UserAchievement {
 }
 
 model Holiday {
-  id                  String   @id @default(uuid())
-  holidayKey          String   @unique @map("holiday_key")
-  arabicName          String   @map("arabic_name")
-  englishName         String   @map("english_name")
-  hijriMonth          Int      @map("hijri_month")
-  hijriDay            Int?     @map("hijri_day")
-  isMovable           Boolean  @default(false) @map("is_movable")
-  significance        String   @db.Text
-  recommendedPractices String? @db.Text @map("recommended_practices")
-  prohibitedActions   String?  @db.Text @map("prohibited_actions")
-  educationContent    String?  @db.Text @map("education_content")
-  audioGuideUrl       String?  @map("audio_guide_url")
-  createdAt           DateTime @default(now()) @map("created_at")
+  id                   String   @id @default(uuid())
+  holidayKey           String   @unique @map("holiday_key")
+  arabicName           String   @map("arabic_name")
+  englishName          String   @map("english_name")
+  hijriMonth           Int      @map("hijri_month")
+  hijriDay             Int?     @map("hijri_day")
+  isMovable            Boolean  @default(false) @map("is_movable")
+  significance         String   @db.Text
+  recommendedPractices String?  @map("recommended_practices") @db.Text
+  prohibitedActions    String?  @map("prohibited_actions") @db.Text
+  educationContent     String?  @map("education_content") @db.Text
+  audioGuideUrl        String?  @map("audio_guide_url")
+  createdAt            DateTime @default(now()) @map("created_at")
 
   observances HolidayObservance[]
 
@@ -293,10 +294,10 @@ model Holiday {
 model HolidayObservance {
   id            String   @id @default(uuid())
   holidayId     String   @map("holiday_id")
-  hijriDate     DateTime @db.Date @map("hijri_date")
-  gregorianDate DateTime @db.Date @map("gregorian_date")
+  hijriDate     DateTime @map("hijri_date") @db.Date
+  gregorianDate DateTime @map("gregorian_date") @db.Date
   isConfirmed   Boolean  @default(false) @map("is_confirmed")
-  region        String?  // For regional differences
+  region        String? // For regional differences
   createdAt     DateTime @default(now()) @map("created_at")
 
   holiday Holiday @relation(fields: [holidayId], references: [id], onDelete: Cascade)
@@ -323,7 +324,7 @@ model Subscription {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   familyMembers FamilyMember[]
 
   @@index([userId, status])
@@ -332,16 +333,16 @@ model Subscription {
 }
 
 model FamilyMember {
-  id            String    @id @default(uuid())
-  subscriptionId String   @map("subscription_id")
-  userId        String    @map("user_id")
-  invitedBy    String    @map("invited_by")
-  status       String    @default("pending") // pending, accepted, removed
-  invitedAt    DateTime  @default(now()) @map("invited_at")
-  acceptedAt   DateTime? @map("accepted_at")
+  id             String    @id @default(uuid())
+  subscriptionId String    @map("subscription_id")
+  userId         String    @map("user_id")
+  invitedBy      String    @map("invited_by")
+  status         String    @default("pending") // pending, accepted, removed
+  invitedAt      DateTime  @default(now()) @map("invited_at")
+  acceptedAt     DateTime? @map("accepted_at")
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([subscriptionId, userId])
   @@index([subscriptionId])
@@ -349,3 +350,22 @@ model FamilyMember {
   @@map("family_members")
 }
 
+model PronunciationProgress {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  letterId        String    @map("letter_id")
+  isLearned       Boolean   @default(false) @map("is_learned")
+  timesPracticed  Int       @default(0) @map("times_practiced")
+  accuracyScore   Decimal?  @map("accuracy_score") @db.Decimal(5, 2)
+  lastPracticedAt DateTime? @map("last_practiced_at")
+  masteredAt      DateTime? @map("mastered_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, letterId])
+  @@index([userId, isLearned])
+  @@index([letterId])
+  @@map("pronunciation_progress")
+}
