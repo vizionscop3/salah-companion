@@ -13,11 +13,44 @@ import {spacing, typography} from '@constants/theme';
 import {usePrayerTimes} from '@hooks/usePrayerTimes';
 import {formatPrayerTime} from '@services/prayer/prayerTimeService';
 import {useNavigation} from '@react-navigation/native';
+import {
+  QiblaCompass,
+  ProgressCard,
+  RecentAchievements,
+  AchievementUnlockModal,
+} from '@components/index';
+import {useProgress} from '@hooks/useProgress';
+import {useAuth} from '@context/AuthContext';
+import {useAchievements} from '@hooks/useAchievements';
+import {useState, useEffect} from 'react';
 
 export const HomeScreen: React.FC = () => {
   const {currentTheme} = useTheme();
   const navigation = useNavigation();
   const {prayerTimes, nextPrayer, loading} = usePrayerTimes();
+  const {user} = useAuth();
+  const {progress, loading: progressLoading} = useProgress(user?.id || null);
+  const {
+    unlockedAchievements,
+    loading: achievementsLoading,
+    checkForNewAchievements,
+  } = useAchievements(user?.id || null);
+
+  const [unlockedAchievement, setUnlockedAchievement] = useState<any>(null);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+
+  // Check for new achievements when progress updates
+  useEffect(() => {
+    if (user?.id && progress) {
+      checkForNewAchievements().then(newlyUnlocked => {
+        if (newlyUnlocked.length > 0) {
+          // Show unlock modal for the first newly unlocked achievement
+          setUnlockedAchievement(newlyUnlocked[0]);
+          setShowUnlockModal(true);
+        }
+      });
+    }
+  }, [user?.id, progress, checkForNewAchievements]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -53,13 +86,22 @@ export const HomeScreen: React.FC = () => {
           </Card>
         )}
 
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Today's Progress</Title>
-            <Paragraph>Prayers completed: 0/5</Paragraph>
-            <Paragraph>Current streak: 0 days</Paragraph>
-          </Card.Content>
-        </Card>
+        <ProgressCard
+          prayersCompleted={progress?.prayersCompleted ?? 0}
+          totalPrayers={progress?.totalPrayers ?? 5}
+          currentStreak={progress?.currentStreak ?? 0}
+          longestStreak={progress?.longestStreak ?? 0}
+          achievements={progress?.achievements ?? 0}
+          showDetails={true}
+        />
+
+        <RecentAchievements
+          achievements={unlockedAchievements}
+          loading={achievementsLoading}
+          maxDisplay={3}
+        />
+
+        <QiblaCompass showDistance={true} />
 
         <Card style={styles.card}>
           <Card.Content>
@@ -88,6 +130,16 @@ export const HomeScreen: React.FC = () => {
           </Card.Content>
         </Card>
       </ScrollView>
+
+      {/* Achievement Unlock Modal */}
+      <AchievementUnlockModal
+        achievement={unlockedAchievement}
+        visible={showUnlockModal}
+        onDismiss={() => {
+          setShowUnlockModal(false);
+          setUnlockedAchievement(null);
+        }}
+      />
     </SafeAreaView>
   );
 };

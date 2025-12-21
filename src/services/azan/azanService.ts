@@ -8,6 +8,7 @@ import Sound from 'react-native-sound';
 import {Platform} from 'react-native';
 import PushNotification from 'react-native-push-notification';
 import {PrayerName} from '@services/prayer/prayerTimeService';
+import {playAzan as playAzanFromService} from './azanAudioService';
 
 export type AzanVoice = 'makkah' | 'madinah' | 'qatami' | 'alafasy';
 
@@ -106,29 +107,37 @@ class AzanService {
 
   /**
    * Play Azan audio
+   * Now supports both local files and remote URLs with caching
    */
   async playAzan(voice?: AzanVoice, volume?: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const azanVoice = voice || this.config.voice;
-      const azanVolume = volume ?? this.config.volume;
+    const azanVoice = voice || this.config.voice;
+    const azanVolume = volume ?? this.config.volume;
 
-      // Stop any currently playing sound
-      this.stopAzan();
+    // Stop any currently playing sound
+    this.stopAzan();
 
-      // Create new sound instance
-      const soundFile = this.getSoundFileName(azanVoice);
-      const sound = new Sound(soundFile, Sound.MAIN_BUNDLE, (error) => {
-        if (error) {
-          console.error('Error loading Azan sound:', error);
-          reject(error);
-          return;
-        }
+    try {
+      // Try using the new audio service (supports remote URLs and caching)
+      await playAzanFromService(azanVoice, azanVolume);
+      // Note: playAzanFromService handles sound lifecycle internally
+      return;
+    } catch (error) {
+      // Fallback to local file if remote/cached audio fails
+      console.warn('Failed to play Azan from audio service, trying local file:', error);
+      
+      return new Promise((resolve, reject) => {
+        const soundFile = this.getSoundFileName(azanVoice);
+        const sound = new Sound(soundFile, Sound.MAIN_BUNDLE, (error) => {
+          if (error) {
+            console.error('Error loading Azan sound:', error);
+            reject(error);
+            return;
+          }
 
-        // Set volume (0.0 to 1.0)
-        sound.setVolume(azanVolume / 100);
+          // Set volume (0.0 to 1.0)
+          sound.setVolume(azanVolume / 100);
 
-        // Play with fade in if configured
-        if (this.config.fadeIn) {
+          // Play with fade in if configured
           sound.play((success) => {
             if (success) {
               console.log('Azan played successfully');
@@ -139,22 +148,11 @@ class AzanService {
             }
             sound.release();
           });
-        } else {
-          sound.play((success) => {
-            if (success) {
-              console.log('Azan played successfully');
-              resolve();
-            } else {
-              console.error('Error playing Azan');
-              reject(new Error('Failed to play Azan'));
-            }
-            sound.release();
-          });
-        }
 
-        this.currentSound = sound;
+          this.currentSound = sound;
+        });
       });
-    });
+    }
   }
 
   /**

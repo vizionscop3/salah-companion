@@ -12,6 +12,7 @@ import {useTheme} from '@context/ThemeContext';
 import {spacing, typography} from '@constants/theme';
 import {formatPrayerTime} from '@services/prayer/prayerTimeService';
 import {usePrayerTimes} from '@hooks/usePrayerTimes';
+import {PrayerCard, CountdownTimer} from '@components/index';
 
 const PRAYER_RAKAHS: Record<string, number> = {
   fajr: 2,
@@ -83,32 +84,41 @@ export const PrayerTimesScreen: React.FC = () => {
         </View>
 
         {nextPrayer && (
-          <Card style={[styles.card, styles.nextPrayerCard]}>
-            <Card.Content>
-              <Title>Next Prayer</Title>
-              <Paragraph>
-                {nextPrayer.prayer.charAt(0).toUpperCase() + nextPrayer.prayer.slice(1)} -{' '}
-                {formatPrayerTime(nextPrayer.time)}
-              </Paragraph>
-            </Card.Content>
-          </Card>
+          <View style={styles.nextPrayerSection}>
+            <Card style={[styles.card, styles.nextPrayerCard]}>
+              <Card.Content>
+                <Title style={styles.nextPrayerTitle}>Next Prayer</Title>
+                <Text style={[styles.nextPrayerName, {color: currentTheme.colors.primary}]}>
+                  {nextPrayer.prayer.charAt(0).toUpperCase() + nextPrayer.prayer.slice(1)}
+                </Text>
+                <Text style={[styles.nextPrayerTime, {color: currentTheme.colors.text}]}>
+                  {formatPrayerTime(nextPrayer.time)}
+                </Text>
+                <View style={styles.countdownContainer}>
+                  <CountdownTimer targetTime={nextPrayer.time} showProgress={true} />
+                </View>
+              </Card.Content>
+            </Card>
+          </View>
         )}
 
-        {prayers.map((prayer, index) => (
-          <Card key={index} style={styles.card}>
-            <Card.Content>
-              <View style={styles.prayerRow}>
-                <View style={styles.prayerInfo}>
-                  <Title>{prayer.name}</Title>
-                  <Paragraph>{PRAYER_RAKAHS[prayer.key]} Rak'ahs</Paragraph>
-                </View>
-                <Text style={[styles.time, {color: currentTheme.colors.primary}]}>
-                  {formatPrayerTime(prayer.time)}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
-        ))}
+        <View style={styles.prayersList}>
+          {prayers.map((prayer, index) => {
+            const isNext = nextPrayer?.prayer === prayer.key;
+            const isPassed = prayer.time < new Date();
+            return (
+              <PrayerCard
+                key={index}
+                prayerName={prayer.name}
+                prayerKey={prayer.key}
+                time={prayer.time}
+                rakAhs={PRAYER_RAKAHS[prayer.key]}
+                isNext={isNext}
+                isPassed={isPassed}
+              />
+            );
+          })}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -143,6 +153,27 @@ const styles = StyleSheet.create({
   nextPrayerCard: {
     backgroundColor: '#E3F2FD',
     marginBottom: spacing.lg,
+  },
+  nextPrayerSection: {
+    marginBottom: spacing.lg,
+  },
+  nextPrayerTitle: {
+    marginBottom: spacing.sm,
+  },
+  nextPrayerName: {
+    ...typography.h3,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  nextPrayerTime: {
+    ...typography.h5,
+    marginBottom: spacing.md,
+  },
+  countdownContainer: {
+    marginTop: spacing.md,
+  },
+  prayersList: {
+    marginTop: spacing.md,
   },
   loadingContainer: {
     flex: 1,
