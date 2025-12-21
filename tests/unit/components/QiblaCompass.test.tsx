@@ -84,7 +84,11 @@ describe('QiblaCompass', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Location permission denied/i)).toBeTruthy();
+      expect(
+        screen.getByText(
+          /Location permission is required to show Qibla direction/i,
+        ),
+      ).toBeTruthy();
     });
   });
 

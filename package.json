@@ -57,7 +57,7 @@
     "react-native-audio-recorder-player": "3.6.0",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "2.14.0",
-    "react-native-get-random-values": "^2.0.0",
+    "react-native-get-random-values": "^1.9.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.0.3",
     "react-native-paper": "^5.11.3",
