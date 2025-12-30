@@ -120,7 +120,7 @@ export const LearningScreen: React.FC = () => {
         },
         {
           title: 'Word Building',
-          description: 'Build words from letters you've learned',
+          description: "Build words from letters you've learned",
           progress: 0,
           type: 'word_building',
           icon: 'alphabetical-variant',
