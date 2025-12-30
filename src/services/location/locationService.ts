@@ -73,7 +73,7 @@ export function getCurrentLocation(): Promise<Location> {
       },
       {
         enableHighAccuracy: false, // Changed to false for faster response
-        timeout: 8000, // Reduced from 15s to 8s
+        timeout: 3000, // Maximum 3 seconds timeout
         maximumAge: 60000, // Accept cached location up to 1 minute old
       },
     );

@@ -39,12 +39,12 @@ export function usePrayerTimes(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Timeout protection: if loading takes too long, use defaults (reduced to 6 seconds)
+  // Timeout protection: if loading takes too long, use defaults (3 seconds max)
   useEffect(() => {
     if (!loading || prayerTimes) return; // Don't set timeout if not loading or already have data
     
     const timeout = setTimeout(() => {
-      console.warn('⏱️ Prayer times loading timeout (6s) - using default location');
+      console.warn('⏱️ Prayer times loading timeout (3s) - using default location');
       setLoading(false);
       // Calculate with default location immediately
       const times = calculatePrayerTimes({
@@ -57,7 +57,7 @@ export function usePrayerTimes(
       setPrayerTimes(times);
       setNextPrayer(getNextPrayer(times));
       console.log('✅ Timeout fallback: Default prayer times set');
-    }, 6000); // 6 second timeout (reduced from 10s for faster UX)
+    }, 3000); // 3 second timeout (maximum)
     
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,11 +81,11 @@ export function usePrayerTimes(
               // Immediately use default location - don't wait
               finalLocation = null;
             } else {
-              // Try to get location with a short timeout (5 seconds max)
+              // Try to get location with a short timeout (3 seconds max)
               console.log('📍 Attempting to get current location...');
               const locationPromise = getCurrentLocation();
               const timeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('Location request timeout')), 5000);
+                setTimeout(() => reject(new Error('Location request timeout')), 3000);
               });
               
               try {
