@@ -38,6 +38,30 @@ export function usePrayerTimes(
   const [location, setLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Timeout protection: if loading takes too long, use defaults (reduced to 6 seconds)
+  useEffect(() => {
+    if (!loading || prayerTimes) return; // Don't set timeout if not loading or already have data
+    
+    const timeout = setTimeout(() => {
+      console.warn('⏱️ Prayer times loading timeout (6s) - using default location');
+      setLoading(false);
+      // Calculate with default location immediately
+      const times = calculatePrayerTimes({
+        latitude: 40.7128,
+        longitude: -74.006,
+        timezone: 'America/New_York',
+        calculationMethod: config?.calculationMethod ?? 'MWL',
+        asrMethod: config?.asrMethod ?? 'Shafi',
+      });
+      setPrayerTimes(times);
+      setNextPrayer(getNextPrayer(times));
+      console.log('✅ Timeout fallback: Default prayer times set');
+    }, 6000); // 6 second timeout (reduced from 10s for faster UX)
+    
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, prayerTimes]);
 
   const calculateTimes = useCallback(
     async (userLocation?: Location) => {
@@ -47,18 +71,41 @@ export function usePrayerTimes(
 
         let finalLocation = userLocation;
 
-        // Get location if not provided
+        // Get location if not provided - with fast timeout and graceful fallback
         if (!finalLocation) {
-          const hasPermission = await requestLocationPermission();
-          if (!hasPermission) {
-            throw new Error('Location permission denied');
+          try {
+            // Check permission first (fast check)
+            const hasPermission = await requestLocationPermission();
+            if (!hasPermission) {
+              console.log('📍 Location permission denied - using default coordinates');
+              // Immediately use default location - don't wait
+              finalLocation = null;
+            } else {
+              // Try to get location with a short timeout (5 seconds max)
+              console.log('📍 Attempting to get current location...');
+              const locationPromise = getCurrentLocation();
+              const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('Location request timeout')), 5000);
+              });
+              
+              try {
+                finalLocation = await Promise.race([locationPromise, timeoutPromise]);
+                setLocation(finalLocation);
+                console.log('✅ Location obtained successfully');
+              } catch (locationError) {
+                console.warn('⚠️ Location request failed or timed out - using default coordinates:', locationError);
+                // Use default location on any error
+                finalLocation = null;
+              }
+            }
+          } catch (locationError) {
+            console.warn('⚠️ Error in location flow - using default coordinates:', locationError);
+            // Use default location on any error
+            finalLocation = null;
           }
-
-          finalLocation = await getCurrentLocation();
-          setLocation(finalLocation);
         }
 
-        // Default to New York if location unavailable
+        // Always use default coordinates if location unavailable (privacy-friendly)
         const latitude = finalLocation?.latitude ?? 40.7128;
         const longitude = finalLocation?.longitude ?? -74.006;
         const timezone =
@@ -66,7 +113,9 @@ export function usePrayerTimes(
             ? getTimezoneFromLocation(latitude, longitude)
             : 'America/New_York';
 
-        // Calculate prayer times
+        console.log(`🕌 Calculating prayer times for: ${finalLocation ? 'User location' : 'Default location (New York)'}`);
+
+        // Calculate prayer times (this is synchronous and fast)
         const times = calculatePrayerTimes({
           latitude,
           longitude,
@@ -80,11 +129,28 @@ export function usePrayerTimes(
 
         setPrayerTimes(times);
         setNextPrayer(getNextPrayer(times));
+        console.log('✅ Prayer times calculated successfully');
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to calculate prayer times';
         setError(errorMessage);
-        console.error('Error calculating prayer times:', err);
+        console.error('❌ Error calculating prayer times:', err);
+        
+        // Even on error, try to calculate with defaults to ensure app works
+        try {
+          const defaultTimes = calculatePrayerTimes({
+            latitude: 40.7128,
+            longitude: -74.006,
+            timezone: 'America/New_York',
+            calculationMethod: config?.calculationMethod ?? 'MWL',
+            asrMethod: config?.asrMethod ?? 'Shafi',
+          });
+          setPrayerTimes(defaultTimes);
+          setNextPrayer(getNextPrayer(defaultTimes));
+          console.log('✅ Fallback: Using default prayer times');
+        } catch (fallbackError) {
+          console.error('❌ Even fallback calculation failed:', fallbackError);
+        }
       } finally {
         setLoading(false);
       }

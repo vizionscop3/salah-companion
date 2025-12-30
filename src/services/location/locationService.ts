@@ -52,6 +52,8 @@ export async function requestLocationPermission(): Promise<boolean> {
  */
 export function getCurrentLocation(): Promise<Location> {
   return new Promise((resolve, reject) => {
+    // Use faster, less accurate location first for better UX
+    // If high accuracy is needed, it can be requested separately
     Geolocation.getCurrentPosition(
       (position) => {
         resolve({
@@ -70,9 +72,9 @@ export function getCurrentLocation(): Promise<Location> {
         } as LocationError);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
+        enableHighAccuracy: false, // Changed to false for faster response
+        timeout: 8000, // Reduced from 15s to 8s
+        maximumAge: 60000, // Accept cached location up to 1 minute old
       },
     );
   });
