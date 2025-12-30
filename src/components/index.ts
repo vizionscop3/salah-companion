@@ -27,6 +27,8 @@ export {LoadingState} from './LoadingState';
 export {ErrorState} from './ErrorState';
 export {NeubrutalCard} from './NeubrutalCard';
 export {NeubrutalButton} from './NeubrutalButton';
+export {AnimatedCard} from './AnimatedCard';
+export {FadeInView} from './FadeInView';
 export {MosqueFinder} from './MosqueFinder';
 export {NotificationList} from './NotificationList';
 export {FontPreloader} from './FontPreloader';

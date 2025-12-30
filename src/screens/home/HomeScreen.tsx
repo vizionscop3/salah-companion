@@ -21,6 +21,8 @@ import {
   NeubrutalCard,
   NeubrutalButton,
   NotificationList,
+  AnimatedCard,
+  FadeInView,
 } from '@components/index';
 import {useProgress} from '@hooks/useProgress';
 import {useAuth} from '@context/AuthContext';
@@ -67,7 +69,12 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         {nextPrayer && prayerTimes && (
-          <NeubrutalCard style={styles.nextPrayerCard} shadowSize="medium">
+          <AnimatedCard
+            index={0}
+            style={styles.nextPrayerCard}
+            shadowSize="medium"
+            accessibilityRole="summary"
+            accessibilityLabel={`Next prayer is ${nextPrayer.prayer} at ${formatPrayerTime(nextPrayer.time)}`}>
             <View style={styles.nextPrayerContent}>
               <Text style={styles.nextPrayerLabel}>Next Prayer</Text>
               <Text style={styles.nextPrayerName}>
@@ -100,7 +107,12 @@ export const HomeScreen: React.FC = () => {
         />
 
         {/* Phase 3 Quick Actions */}
-        <NeubrutalCard style={styles.phase3ActionsCard} shadowSize="medium">
+        <AnimatedCard
+          index={2}
+          style={styles.phase3ActionsCard}
+          shadowSize="medium"
+          accessibilityRole="region"
+          accessibilityLabel="Advanced features">
           <Text style={styles.phase3ActionsTitle}>Advanced Features</Text>
           <View style={styles.phase3ActionsList}>
             <NeubrutalButton

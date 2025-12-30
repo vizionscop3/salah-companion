@@ -9,6 +9,7 @@ import {View, Text, StyleSheet} from 'react-native';
 import {Card, ProgressBar} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
 import {spacing, typography, colors, elevation} from '@constants/theme';
+import {getProgressAccessibilityLabel} from '@utils/accessibilityEnhancements';
 
 export interface ProgressCardProps {
   prayersCompleted: number;
@@ -32,8 +33,17 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
   const progress = totalPrayers > 0 ? prayersCompleted / totalPrayers : 0;
   const progressPercentage = Math.round(progress * 100);
 
+  const accessibilityLabel = getProgressAccessibilityLabel(
+    prayersCompleted,
+    totalPrayers,
+    "Today's prayer progress",
+  );
+
   return (
-    <Card style={[styles.card, elevation[2]]}>
+    <Card
+      style={[styles.card, elevation[2]]}
+      accessibilityRole="summary"
+      accessibilityLabel={accessibilityLabel}>
       <Card.Content style={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.title, {color: currentTheme.colors.text}]}>
@@ -49,6 +59,13 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
             progress={progress}
             color={currentTheme.colors.primary}
             style={styles.progressBar}
+            accessibilityRole="progressbar"
+            accessibilityValue={{
+              min: 0,
+              max: totalPrayers,
+              now: prayersCompleted,
+              text: `${progressPercentage}%`,
+            }}
           />
           <Text style={[styles.progressText, {color: currentTheme.colors.text}]}>
             {prayersCompleted} of {totalPrayers} prayers completed

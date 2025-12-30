@@ -50,14 +50,26 @@ export const NeubrutalCard: React.FC<NeubrutalCardProps> = ({
 
   const handlePressIn = () => {
     if (disabled || !onPress) return;
-    scale.value = withSpring(0.98);
-    translateY.value = withSpring(2);
+    scale.value = withSpring(0.97, {
+      damping: 15,
+      stiffness: 300,
+    });
+    translateY.value = withSpring(3, {
+      damping: 15,
+      stiffness: 300,
+    });
   };
 
   const handlePressOut = () => {
     if (disabled || !onPress) return;
-    scale.value = withSpring(1);
-    translateY.value = withSpring(0);
+    scale.value = withSpring(1, {
+      damping: 20,
+      stiffness: 200,
+    });
+    translateY.value = withSpring(0, {
+      damping: 20,
+      stiffness: 200,
+    });
   };
 
   const shadowStyle = neubrutalShadows[shadowSize];
@@ -84,6 +96,8 @@ export const NeubrutalCard: React.FC<NeubrutalCardProps> = ({
         onPressOut={handlePressOut}
         disabled={disabled}
         activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityState={{disabled}}
         {...props}>
         {children}
       </AnimatedTouchable>

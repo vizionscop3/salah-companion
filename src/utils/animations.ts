@@ -1,131 +1,142 @@
 /**
  * Animation Utilities
  *
- * Reusable animation configurations for smooth UI transitions
+ * Reusable animation configurations and helpers for smooth UI transitions.
  */
 
-import {Animated, Easing} from 'react-native';
+import {withSpring, withTiming, Easing} from 'react-native-reanimated';
 
-// Fade in animation
-export const fadeIn = (value: Animated.Value, duration: number = 300) => {
-  return Animated.timing(value, {
-    toValue: 1,
-    duration,
-    easing: Easing.out(Easing.ease),
-    useNativeDriver: true,
-  });
+/**
+ * Spring animation configurations
+ */
+export const springConfigs = {
+  gentle: {
+    damping: 15,
+    stiffness: 150,
+    mass: 1,
+  },
+  bouncy: {
+    damping: 10,
+    stiffness: 200,
+    mass: 0.8,
+  },
+  snappy: {
+    damping: 20,
+    stiffness: 300,
+    mass: 0.5,
+  },
+  smooth: {
+    damping: 25,
+    stiffness: 180,
+    mass: 1.2,
+  },
 };
 
-// Fade out animation
-export const fadeOut = (value: Animated.Value, duration: number = 300) => {
-  return Animated.timing(value, {
-    toValue: 0,
+/**
+ * Timing animation configurations
+ */
+export const timingConfigs = {
+  fast: {
+    duration: 200,
+    easing: Easing.out(Easing.cubic),
+  },
+  medium: {
+    duration: 300,
+    easing: Easing.inOut(Easing.ease),
+  },
+  slow: {
+    duration: 500,
+    easing: Easing.inOut(Easing.ease),
+  },
+  smooth: {
+    duration: 400,
+    easing: Easing.bezier(0.4, 0, 0.2, 1),
+  },
+};
+
+/**
+ * Create spring animation
+ */
+export function createSpringAnimation(
+  toValue: number,
+  config: keyof typeof springConfigs = 'gentle',
+) {
+  return withSpring(toValue, springConfigs[config]);
+}
+
+/**
+ * Create timing animation
+ */
+export function createTimingAnimation(
+  toValue: number,
+  config: keyof typeof timingConfigs = 'medium',
+) {
+  return withTiming(toValue, timingConfigs[config]);
+}
+
+/**
+ * Fade in animation
+ */
+export function fadeIn(duration: number = 300) {
+  return withTiming(1, {
+    duration,
+    easing: Easing.out(Easing.ease),
+  });
+}
+
+/**
+ * Fade out animation
+ */
+export function fadeOut(duration: number = 200) {
+  return withTiming(0, {
     duration,
     easing: Easing.in(Easing.ease),
-    useNativeDriver: true,
   });
-};
+}
 
-// Slide in from bottom
-export const slideInBottom = (value: Animated.Value, duration: number = 300) => {
-  return Animated.timing(value, {
-    toValue: 0,
-    duration,
-    easing: Easing.out(Easing.ease),
-    useNativeDriver: true,
-  });
-};
+/**
+ * Slide in from bottom animation
+ */
+export function slideInFromBottom(translateY: number = 0) {
+  return withSpring(translateY, springConfigs.smooth);
+}
 
-// Slide in from right
-export const slideInRight = (value: Animated.Value, duration: number = 300) => {
-  return Animated.timing(value, {
-    toValue: 0,
-    duration,
-    easing: Easing.out(Easing.ease),
-    useNativeDriver: true,
-  });
-};
+/**
+ * Slide out to bottom animation
+ */
+export function slideOutToBottom(translateY: number = 100) {
+  return withTiming(translateY, timingConfigs.fast);
+}
 
-// Scale animation
-export const scaleIn = (value: Animated.Value, duration: number = 300) => {
-  return Animated.spring(value, {
-    toValue: 1,
-    friction: 8,
-    tension: 40,
-    useNativeDriver: true,
-  });
-};
+/**
+ * Scale animation
+ */
+export function scaleAnimation(scale: number, config: keyof typeof springConfigs = 'bouncy') {
+  return withSpring(scale, springConfigs[config]);
+}
 
-// Pulse animation
-export const pulse = (value: Animated.Value) => {
-  return Animated.loop(
-    Animated.sequence([
-      Animated.timing(value, {
-        toValue: 1.1,
-        duration: 500,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(value, {
-        toValue: 1,
-        duration: 500,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]),
-  );
-};
+/**
+ * Rotate animation
+ */
+export function rotateAnimation(degrees: number) {
+  return withTiming(degrees, timingConfigs.medium);
+}
 
-// Shake animation (for errors)
-export const shake = (value: Animated.Value) => {
-  return Animated.sequence([
-    Animated.timing(value, {
-      toValue: 10,
-      duration: 50,
-      useNativeDriver: true,
+/**
+ * Stagger animation delays for list items
+ */
+export function getStaggerDelay(index: number, delay: number = 50): number {
+  return index * delay;
+}
+
+/**
+ * Pulse animation (for loading states)
+ */
+export function createPulseAnimation() {
+  return {
+    opacity: withTiming(0.3, {
+      duration: 1000,
+      easing: Easing.inOut(Easing.ease),
     }),
-    Animated.timing(value, {
-      toValue: -10,
-      duration: 50,
-      useNativeDriver: true,
-    }),
-    Animated.timing(value, {
-      toValue: 10,
-      duration: 50,
-      useNativeDriver: true,
-    }),
-    Animated.timing(value, {
-      toValue: 0,
-      duration: 50,
-      useNativeDriver: true,
-    }),
-  ]);
-};
-
-// Stagger animation for lists
-export const stagger = (
-  values: Animated.Value[],
-  delay: number = 100,
-  duration: number = 300,
-) => {
-  return Animated.stagger(
-    delay,
-    values.map(value =>
-      Animated.timing(value, {
-        toValue: 1,
-        duration,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ),
-  );
-};
-
-// Easing functions
-export const easings = {
-  easeInOut: Easing.inOut(Easing.ease),
-  easeOut: Easing.out(Easing.ease),
-  easeIn: Easing.in(Easing.ease),
-  bounce: Easing.bounce,
-  elastic: Easing.elastic(1),
-};
+  };
+}

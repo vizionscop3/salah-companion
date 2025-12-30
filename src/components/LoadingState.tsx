@@ -7,6 +7,7 @@
 
 import React from 'react';
 import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
+import {FadeInView} from './FadeInView';
 import {Card} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
 import {spacing, typography} from '@constants/theme';
