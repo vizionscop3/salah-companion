@@ -7,7 +7,6 @@
 import React, {lazy, Suspense} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {ActivityIndicator, View} from 'react-native';
 
 // Lazy load heavy screens for better performance
 const HomeScreen = lazy(() => import('@screens/home/HomeScreen').then(m => ({default: m.HomeScreen})));
@@ -75,44 +74,80 @@ const MainTabs: React.FC = () => {
       }}>
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="home" size={size} color={color} />
           ),
-        }}
-      />
+        }}>
+        {props => (
+          <Suspense
+            fallback={
+              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <ActivityIndicator size="large" />
+              </View>
+            }>
+            <HomeScreen {...props} />
+          </Suspense>
+        )}
+      </Tab.Screen>
       <Tab.Screen
         name="PrayerTimes"
-        component={PrayerTimesScreen}
         options={{
           tabBarLabel: 'Prayer Time',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="clock-outline" size={size} color={color} />
           ),
-        }}
-      />
+        }}>
+        {props => (
+          <Suspense
+            fallback={
+              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <ActivityIndicator size="large" />
+              </View>
+            }>
+            <PrayerTimesScreen {...props} />
+          </Suspense>
+        )}
+      </Tab.Screen>
       <Tab.Screen
         name="Learning"
-        component={LearningScreen}
         options={{
           tabBarLabel: 'Learning',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="book-open-variant" size={size} color={color} />
           ),
-        }}
-      />
+        }}>
+        {props => (
+          <Suspense
+            fallback={
+              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <ActivityIndicator size="large" />
+              </View>
+            }>
+            <LearningScreen {...props} />
+          </Suspense>
+        )}
+      </Tab.Screen>
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="account" size={size} color={color} />
           ),
-        }}
-      />
+        }}>
+        {props => (
+          <Suspense
+            fallback={
+              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <ActivityIndicator size="large" />
+              </View>
+            }>
+            <ProfileScreen {...props} />
+          </Suspense>
+        )}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };
@@ -131,17 +166,6 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
-  // Loading component for lazy-loaded screens
-  const LazyScreenWrapper = ({children}: {children: React.ReactNode}) => (
-    <Suspense
-      fallback={
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <ActivityIndicator size="large" />
-        </View>
-      }>
-      {children}
-    </Suspense>
-  );
 
   return (
     <Stack.Navigator
