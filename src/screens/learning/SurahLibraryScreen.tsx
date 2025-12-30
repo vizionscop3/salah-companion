@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  FlatList,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Card, Title, Paragraph, Searchbar, Chip} from 'react-native-paper';
@@ -234,7 +235,10 @@ export const SurahLibraryScreen: React.FC = () => {
             </Card.Content>
           </Card>
         ) : (
-          filteredSurahs.map(surah => (
+          <FlatList
+            data={filteredSurahs}
+            keyExtractor={item => item.number.toString()}
+            renderItem={({item: surah}) => (
             <TouchableOpacity
               key={surah.number}
               onPress={() => handleSurahPress(surah.number)}
