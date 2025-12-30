@@ -159,7 +159,7 @@ export const AppNavigator: React.FC = () => {
       screenOptions={{
         headerShown: false,
       }}>
-      {!isAuthenticated ? (
+      {!effectiveIsAuthenticated ? (
         <>
           <Stack.Screen
             name="Login"
