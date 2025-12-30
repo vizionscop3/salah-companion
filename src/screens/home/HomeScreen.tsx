@@ -88,7 +88,7 @@ export const HomeScreen: React.FC = () => {
                 minutes remaining
               </Text>
             </View>
-          </NeubrutalCard>
+          </AnimatedCard>
         )}
 
         <ProgressCard
