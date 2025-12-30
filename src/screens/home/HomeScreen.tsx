@@ -32,7 +32,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 export const HomeScreen: React.FC = () => {
   const {currentTheme} = useTheme();
   const navigation = useNavigation();
-  const {prayerTimes, nextPrayer, loading} = usePrayerTimes();
+  const {prayerTimes, nextPrayer, loading, error: prayerError} = usePrayerTimes();
   const {user} = useAuth();
   const {progress, loading: progressLoading} = useProgress(user?.id || null);
   const {
@@ -172,8 +172,12 @@ export const HomeScreen: React.FC = () => {
     );
   };
 
-  // Show loading state while data is being fetched
-  if (loading || progressLoading) {
+  // Show loading state while data is being fetched (with timeout protection)
+  // Only show loading if we're actually waiting for critical data
+  const isInitialLoading = loading && !prayerTimes && !prayerError;
+  const isProgressLoading = progressLoading && user?.id && !progress;
+  
+  if (isInitialLoading || isProgressLoading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
