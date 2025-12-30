@@ -39,7 +39,7 @@ export interface NeubrutalButtonProps {
   icon?: React.ReactNode;
 }
 
-export const NeubrutalButton: React.FC<NeubrutalButtonProps> = ({
+export const NeubrutalButton: React.FC<NeubrutalButtonProps> = React.memo(({
   title,
   onPress,
   variant = 'primary',

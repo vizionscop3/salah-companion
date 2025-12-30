@@ -239,52 +239,61 @@ export const SurahLibraryScreen: React.FC = () => {
             data={filteredSurahs}
             keyExtractor={item => item.number.toString()}
             renderItem={({item: surah}) => (
-            <TouchableOpacity
-              key={surah.number}
-              onPress={() => handleSurahPress(surah.number)}
-              activeOpacity={0.7}>
-              <Card style={styles.card}>
-                <Card.Content>
-                  <View style={styles.surahHeader}>
-                    <View style={styles.surahNumber}>
-                      <Text
-                        style={[
-                          styles.surahNumberText,
-                          {color: currentTheme.colors.primary},
-                        ]}>
-                        {surah.number}
-                      </Text>
-                    </View>
-                    <View style={styles.surahInfo}>
-                      <Title style={styles.surahName}>{surah.name}</Title>
-                      <Paragraph style={styles.surahEnglishName}>
-                        {surah.englishName}
-                      </Paragraph>
-                      {surah.englishNameTranslation && (
-                        <Paragraph style={styles.surahTranslation}>
-                          {surah.englishNameTranslation}
+              <TouchableOpacity
+                onPress={() => handleSurahPress(surah.number)}
+                activeOpacity={0.7}>
+                <Card style={styles.card}>
+                  <Card.Content>
+                    <View style={styles.surahHeader}>
+                      <View style={styles.surahNumber}>
+                        <Text
+                          style={[
+                            styles.surahNumberText,
+                            {color: currentTheme.colors.primary},
+                          ]}>
+                          {surah.number}
+                        </Text>
+                      </View>
+                      <View style={styles.surahInfo}>
+                        <Title style={styles.surahName}>{surah.name}</Title>
+                        <Paragraph style={styles.surahEnglishName}>
+                          {surah.englishName}
                         </Paragraph>
-                      )}
-                      <View style={styles.surahMeta}>
-                        <Chip
-                          icon="book-open-page-variant"
-                          style={styles.metaChip}
-                          textStyle={styles.metaChipText}>
-                          {surah.numberOfAyahs} Ayahs
-                        </Chip>
-                        <Chip
-                          icon="map-marker"
-                          style={styles.metaChip}
-                          textStyle={styles.metaChipText}>
-                          {surah.revelationType}
-                        </Chip>
+                        {surah.englishNameTranslation && (
+                          <Paragraph style={styles.surahTranslation}>
+                            {surah.englishNameTranslation}
+                          </Paragraph>
+                        )}
+                        <View style={styles.surahMeta}>
+                          <Chip
+                            icon="book-open-page-variant"
+                            style={styles.metaChip}
+                            textStyle={styles.metaChipText}>
+                            {surah.numberOfAyahs} Ayahs
+                          </Chip>
+                          <Chip
+                            icon="map-marker"
+                            style={styles.metaChip}
+                            textStyle={styles.metaChipText}>
+                            {surah.revelationType}
+                          </Chip>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </Card.Content>
-              </Card>
-            </TouchableOpacity>
-          ))
+                  </Card.Content>
+                </Card>
+              </TouchableOpacity>
+            )}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            initialNumToRender={10}
+            getItemLayout={(data, index) => ({
+              length: 120,
+              offset: 120 * index,
+              index,
+            })}
+          />
         )}
       </ScrollView>
     </SafeAreaView>
