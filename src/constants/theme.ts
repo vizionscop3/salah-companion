@@ -45,12 +45,15 @@ export const colors = {
     purple: '#A78BFA', // Fajr
     blue: '#60A5FA', // Info
     turquoise: '#3DD9C5', // Primary
+    bold: '#FFB84D', // Alias for gold (for compatibility)
   },
   surface: {
     primary: '#0F1419', // Main background
     secondary: '#1A2332', // Cards
     tertiary: '#242F42', // Elevated
     elevated: '#2A3647', // Floating
+    main: '#1A2332', // Alias for secondary (for compatibility)
+    dark: '#0A0E13', // Alias for background.dark (for compatibility)
   },
   text: {
     primary: '#FFFFFF',
@@ -66,6 +69,7 @@ export const colors = {
   border: {
     primary: '#3DD9C5',
     dark: '#0A0E13',
+    secondary: '#1A2332', // Alias for surface.secondary (for compatibility)
     width: 3,
     widthThick: 4,
   },

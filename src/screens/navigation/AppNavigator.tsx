@@ -26,6 +26,11 @@ import {SurahPracticeScreen} from '@screens/learning/recitation/SurahPracticeScr
 import {SurahLibraryScreen} from '@screens/learning/SurahLibraryScreen';
 import {AzanEducationScreen} from '@screens/learning/AzanEducationScreen';
 import {HolidayEducationScreen} from '@screens/learning/HolidayEducationScreen';
+import {WordBuildingScreen} from '@screens/learning/pronunciation/WordBuildingScreen';
+import {TajweedRulesScreen} from '@screens/learning/recitation/TajweedRulesScreen';
+import {MemorizationScreen} from '@screens/learning/memorization/MemorizationScreen';
+import {LeaderboardScreen} from '@screens/social/LeaderboardScreen';
+import {RamadanScreen} from '@screens/ramadan/RamadanScreen';
 import {EditProfileScreen} from '@screens/profile/EditProfileScreen';
 import {useAuth} from '@context/AuthContext';
 import {ActivityIndicator, View, StyleSheet} from 'react-native';
@@ -253,6 +258,46 @@ export const AppNavigator: React.FC = () => {
                 options={{
                   headerShown: true,
                   title: 'Holiday Education',
+                }}
+              />
+              <Stack.Screen
+                name="WordBuilding"
+                component={WordBuildingScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Word Building',
+                }}
+              />
+              <Stack.Screen
+                name="TajweedRules"
+                component={TajweedRulesScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Tajweed Rules',
+                }}
+              />
+              <Stack.Screen
+                name="Memorization"
+                component={MemorizationScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Memorization',
+                }}
+              />
+              <Stack.Screen
+                name="Leaderboard"
+                component={LeaderboardScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Leaderboards',
+                }}
+              />
+              <Stack.Screen
+                name="Ramadan"
+                component={RamadanScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Ramadan Mode',
                 }}
               />
               <Stack.Screen

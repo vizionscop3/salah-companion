@@ -5,6 +5,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// @ts-ignore - NetInfo types may not be available
 import NetInfo from '@react-native-community/netinfo';
 
 export interface OfflineCache {

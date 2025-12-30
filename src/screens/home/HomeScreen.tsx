@@ -99,6 +99,34 @@ export const HomeScreen: React.FC = () => {
           maxDisplay={3}
         />
 
+        {/* Phase 3 Quick Actions */}
+        <NeubrutalCard style={styles.phase3ActionsCard} shadowSize="medium">
+          <Text style={styles.phase3ActionsTitle}>Advanced Features</Text>
+          <View style={styles.phase3ActionsList}>
+            <NeubrutalButton
+              title="Leaderboards"
+              onPress={() => (navigation as any).navigate('Leaderboard')}
+              size="small"
+              variant="outline"
+              style={styles.phase3ActionButton}
+            />
+            <NeubrutalButton
+              title="Memorization"
+              onPress={() => (navigation as any).navigate('Memorization')}
+              size="small"
+              variant="outline"
+              style={styles.phase3ActionButton}
+            />
+            <NeubrutalButton
+              title="Ramadan Mode"
+              onPress={() => (navigation as any).navigate('Ramadan')}
+              size="small"
+              variant="outline"
+              style={styles.phase3ActionButton}
+            />
+          </View>
+        </NeubrutalCard>
+
         <QiblaCompass showDistance={true} />
 
         <NeubrutalCard style={styles.quickActionsCard} shadowSize="medium">
@@ -302,5 +330,24 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '100%',
+  },
+  phase3ActionsCard: {
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  phase3ActionsTitle: {
+    ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  phase3ActionsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  phase3ActionButton: {
+    flex: 1,
+    minWidth: '30%',
   },
 });

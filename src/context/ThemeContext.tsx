@@ -6,7 +6,7 @@
 
 import React, {createContext, useContext, useState, useCallback} from 'react';
 import {useColorScheme} from 'react-native';
-import {theme} from '@constants/theme';
+import {theme, colors} from '@constants/theme';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -14,6 +14,7 @@ interface ThemeContextType {
   mode: ThemeMode;
   isDark: boolean;
   currentTheme: typeof theme.light;
+  colors: typeof colors; // Add direct access to colors
   setMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
 }
@@ -49,6 +50,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
         mode,
         isDark,
         currentTheme,
+        colors, // Add colors to context
         setMode: handleSetMode,
         toggleTheme,
       }}>

@@ -118,6 +118,27 @@ export const LearningScreen: React.FC = () => {
           type: 'holiday',
           icon: 'calendar-star',
         },
+        {
+          title: 'Word Building',
+          description: 'Build words from letters you've learned',
+          progress: 0,
+          type: 'word_building',
+          icon: 'alphabetical-variant',
+        },
+        {
+          title: 'Tajweed Rules',
+          description: 'Learn proper Quranic recitation rules',
+          progress: 0,
+          type: 'tajweed',
+          icon: 'book-open-variant',
+        },
+        {
+          title: 'Memorization',
+          description: 'Track your Quran memorization with spaced repetition',
+          progress: 0,
+          type: 'memorization',
+          icon: 'brain',
+        },
       ];
 
       setModules(updatedModules);
@@ -234,6 +255,12 @@ export const LearningScreen: React.FC = () => {
                     (navigation as any).navigate('HolidayEducation', {
                       holidayKey: 'ramadan',
                     });
+                  } else if (module.type === 'word_building') {
+                    (navigation as any).navigate('WordBuilding');
+                  } else if (module.type === 'tajweed') {
+                    (navigation as any).navigate('TajweedRules');
+                  } else if (module.type === 'memorization') {
+                    (navigation as any).navigate('Memorization');
                   } else {
                     console.log('Opening:', module.type);
                   }

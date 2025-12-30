@@ -187,12 +187,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   unlockedCard: {
-    backgroundColor: colors.surface.main,
+    backgroundColor: colors.surface.secondary,
     borderWidth: 2,
     borderColor: colors.primary.main + '40',
   },
   lockedCard: {
-    backgroundColor: colors.surface.dark,
+    backgroundColor: colors.surface.tertiary,
     opacity: 0.7,
   },
   content: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.surface.main,
+    borderColor: colors.surface.secondary,
   },
   unlockedText: {
     color: '#fff',
