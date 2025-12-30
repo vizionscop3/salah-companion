@@ -57,7 +57,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const loadUser = async () => {
     try {
       setLoading(true);
-      const currentUser = await getCurrentUser();
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise<null>((resolve) => {
+        setTimeout(() => {
+          console.warn('Auth loading timeout - proceeding without user');
+          resolve(null);
+        }, 2000); // 2 second timeout
+      });
+      
+      const userPromise = getCurrentUser().catch((err) => {
+        console.warn('Error getting current user:', err);
+        return null;
+      });
+      
+      const currentUser = await Promise.race([userPromise, timeoutPromise]);
       setUser(currentUser);
     } catch (error) {
       console.error('Error loading user:', error);

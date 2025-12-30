@@ -122,10 +122,26 @@ const MainTabs: React.FC = () => {
 export const AppNavigator: React.FC = () => {
   const {isAuthenticated, loading, user} = useAuth();
 
-  if (loading) {
+  // Add timeout for loading state to prevent blank screen
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        console.warn('AppNavigator: Loading timeout - showing login screen');
+        setLoadingTimeout(true);
+      }, 2000); // 2 second timeout
+      
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [loading]);
+  
+  if (loading && !loadingTimeout) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ActivityIndicator size="large" />
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background.default}}>
+        <ActivityIndicator size="large" color={colors.primary.main} />
       </View>
     );
   }
