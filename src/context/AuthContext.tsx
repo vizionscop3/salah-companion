@@ -58,12 +58,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     try {
       setLoading(true);
       
-      // Add timeout to prevent infinite loading
+      // Add timeout to prevent infinite loading (reduced to 1 second)
       const timeoutPromise = new Promise<null>((resolve) => {
         setTimeout(() => {
-          console.warn('Auth loading timeout - proceeding without user');
+          console.warn('Auth loading timeout (1s) - proceeding without user');
           resolve(null);
-        }, 2000); // 2 second timeout
+        }, 1000); // 1 second timeout (reduced from 2s for faster UX)
       });
       
       const userPromise = getCurrentUser().catch((err) => {
