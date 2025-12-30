@@ -151,7 +151,7 @@ export const NeubrutalButton: React.FC<NeubrutalButtonProps> = React.memo(({
       )}
     </AnimatedTouchable>
   );
-};
+});
 
 const styles = StyleSheet.create({
   button: {
