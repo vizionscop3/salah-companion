@@ -137,7 +137,7 @@ export const HomeScreen: React.FC = () => {
               style={styles.phase3ActionButton}
             />
           </View>
-        </NeubrutalCard>
+        </AnimatedCard>
 
         <QiblaCompass showDistance={true} />
 
