@@ -39,6 +39,23 @@ export function usePrayerTimes(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Immediately calculate with default coordinates to prevent loading loop
+  // Then try to get user location in the background
+  useEffect(() => {
+    // Set default prayer times immediately so app doesn't hang
+    const defaultTimes = calculatePrayerTimes({
+      latitude: 40.7128,
+      longitude: -74.006,
+      timezone: 'America/New_York',
+      calculationMethod: config?.calculationMethod ?? 'MWL',
+      asrMethod: config?.asrMethod ?? 'Shafi',
+    });
+    setPrayerTimes(defaultTimes);
+    setNextPrayer(getNextPrayer(defaultTimes));
+    setLoading(false);
+    console.log('✅ Default prayer times set immediately');
+  }, []); // Only run once on mount
+  
   // Timeout protection: if loading takes too long, use defaults (3 seconds max)
   useEffect(() => {
     if (!loading || prayerTimes) return; // Don't set timeout if not loading or already have data
@@ -158,9 +175,20 @@ export function usePrayerTimes(
     [config],
   );
 
+  // Try to get user location in the background after default times are set
   useEffect(() => {
-    calculateTimes();
-  }, [calculateTimes]);
+    // Only try to get location if we have default times already set
+    // This prevents blocking the initial render
+    if (prayerTimes && !location) {
+      // Get location in background and update if successful (non-blocking)
+      setTimeout(() => {
+        calculateTimes().catch((err) => {
+          console.warn('Background location update failed, keeping defaults:', err);
+          // Keep default times if location fails - app still works
+        });
+      }, 100); // Small delay to ensure UI renders first
+    }
+  }, [prayerTimes, location, calculateTimes]);
 
   const refresh = useCallback(async () => {
     await calculateTimes();

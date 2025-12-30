@@ -20,6 +20,7 @@ import {FontPreloader} from '@components/FontPreloader';
 import {theme} from '@constants/theme';
 import {initializeNotifications} from '@services/notifications/notificationService';
 import {measureAppStartup} from '@utils/performanceMonitor';
+import {requestLocationPermission} from '@services/location/locationService';
 // TODO: Re-enable Google Sign-In after configuration
 // import {initializeGoogleSignIn} from '@services/auth/authService';
 
@@ -31,6 +32,26 @@ const App: React.FC = () => {
     if (__DEV__) {
       measureAppStartup();
     }
+
+    // Request location permission on app initialization (non-blocking)
+    // This allows the app to request permission early, but doesn't block app startup
+    const requestLocation = async () => {
+      try {
+        console.log('📍 Requesting location permission on app initialization...');
+        const hasPermission = await requestLocationPermission();
+        if (hasPermission) {
+          console.log('✅ Location permission granted');
+        } else {
+          console.log('ℹ️ Location permission denied - app will use default coordinates');
+        }
+      } catch (error) {
+        console.warn('⚠️ Error requesting location permission:', error);
+        // Don't block app startup if permission request fails
+      }
+    };
+    
+    // Request location permission asynchronously (non-blocking)
+    requestLocation();
 
     // Initialize notification service (non-blocking)
     try {
