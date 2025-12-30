@@ -1,17 +1,15 @@
 /**
- * Learning Screen
+ * Learning Screen - Material Neubrutomorphism
  *
  * Access to learning modules: Arabic Pronunciation, Recitation Practice, etc.
  * Includes progress tracking for each learning module.
  */
 
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Card, Title, Paragraph, Button, ProgressBar} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
-import {islamicShadows, islamicBorderRadius} from '@constants/islamicTheme';
+import {spacing, typography, colors, borderRadius, brutalistShadows} from '@constants/theme';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '@context/AuthContext';
 import {
@@ -22,6 +20,8 @@ import {
 } from '@services/progress/recitationAnalyticsService';
 import {getTodayProgress} from '@services/progress/progressService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NeubrutalCard, NeubrutalButton, AnimatedCard} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface LearningModule {
   title: string;
@@ -193,84 +193,143 @@ export const LearningScreen: React.FC = () => {
       type: 'holiday',
       icon: 'calendar-star',
     },
+    {
+      title: 'Word Building',
+      description: "Build words from letters you've learned",
+      progress: 0,
+      type: 'word_building',
+      icon: 'alphabetical-variant',
+    },
+    {
+      title: 'Tajweed Rules',
+      description: 'Learn proper Quranic recitation rules',
+      progress: 0,
+      type: 'tajweed',
+      icon: 'book-open-variant',
+    },
+    {
+      title: 'Memorization',
+      description: 'Track your Quran memorization with spaced repetition',
+      progress: 0,
+      type: 'memorization',
+      icon: 'brain',
+    },
   ];
+
+  const handleModulePress = (module: LearningModule) => {
+    if (module.type === 'guided') {
+      (navigation as any).navigate('GuidedSalah', {
+        prayer: 'fajr',
+      });
+    } else if (module.type === 'pronunciation') {
+      (navigation as any).navigate('PronunciationAcademy');
+    } else if (module.type === 'recitation') {
+      (navigation as any).navigate('RecitationPractice');
+    } else if (module.type === 'surah') {
+      (navigation as any).navigate('SurahLibrary');
+      // Mark as viewed
+      if (user?.id) {
+        AsyncStorage.setItem(
+          `@salah_companion:surah_library_viewed:${user.id}`,
+          'true',
+        );
+      }
+    } else if (module.type === 'azan') {
+      (navigation as any).navigate('AzanEducation');
+    } else if (module.type === 'holiday') {
+      (navigation as any).navigate('HolidayEducation', {
+        holidayKey: 'ramadan',
+      });
+    } else if (module.type === 'word_building') {
+      (navigation as any).navigate('WordBuilding');
+    } else if (module.type === 'tajweed') {
+      (navigation as any).navigate('TajweedRules');
+    } else if (module.type === 'memorization') {
+      (navigation as any).navigate('Memorization');
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Loading learning modules...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}>
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
-            Learning Center
-          </Text>
-          <Text style={[styles.subtitle, {color: currentTheme.colors.text}]}>
-            Build understanding and connection
-          </Text>
+          <Text style={styles.title}>Learning Center</Text>
+          <Text style={styles.subtitle}>Build understanding and connection</Text>
         </View>
 
         {modules.map((module, index) => (
-          <Card key={index} style={styles.card}>
-            <Card.Content>
+          <AnimatedCard
+            key={index}
+            index={index}
+            style={styles.moduleCard}
+            shadowSize="medium">
+            <View style={styles.moduleContent}>
+              {/* Module Header with Icon */}
               <View style={styles.moduleHeader}>
-                <Title style={styles.moduleTitle}>{module.title}</Title>
-                <Text style={[styles.progressText, {color: currentTheme.colors.primary}]}>
-                  {Math.round(module.progress * 100)}%
-                </Text>
-              </View>
-              <Paragraph style={styles.moduleDescription}>{module.description}</Paragraph>
-              
-              {/* Progress Bar */}
-              <View style={styles.progressContainer}>
-                <ProgressBar
-                  progress={module.progress}
-                  color={currentTheme.colors.primary}
-                  style={styles.progressBar}
-                />
+                <View style={styles.iconContainer}>
+                  <MaterialCommunityIcons
+                    name={module.icon || 'book-open-variant'}
+                    size={32}
+                    color={colors.primary.main}
+                  />
+                </View>
+                <View style={styles.moduleHeaderText}>
+                  <Text style={styles.moduleTitle}>{module.title}</Text>
+                  <Text style={styles.moduleDescription}>{module.description}</Text>
+                </View>
               </View>
 
-              <Button
-                mode="contained"
-                onPress={() => {
-                  if (module.type === 'guided') {
-                    (navigation as any).navigate('GuidedSalah', {
-                      prayer: 'fajr',
-                    });
-                  } else if (module.type === 'pronunciation') {
-                    (navigation as any).navigate('PronunciationAcademy');
-                  } else if (module.type === 'recitation') {
-                    (navigation as any).navigate('RecitationPractice');
-                  } else if (module.type === 'surah') {
-                    (navigation as any).navigate('SurahLibrary');
-                    // Mark as viewed
-                    if (user?.id) {
-                      AsyncStorage.setItem(
-                        `@salah_companion:surah_library_viewed:${user.id}`,
-                        'true',
-                      );
-                    }
-                  } else if (module.type === 'azan') {
-                    (navigation as any).navigate('AzanEducation');
-                  } else if (module.type === 'holiday') {
-                    (navigation as any).navigate('HolidayEducation', {
-                      holidayKey: 'ramadan',
-                    });
-                  } else if (module.type === 'word_building') {
-                    (navigation as any).navigate('WordBuilding');
-                  } else if (module.type === 'tajweed') {
-                    (navigation as any).navigate('TajweedRules');
-                  } else if (module.type === 'memorization') {
-                    (navigation as any).navigate('Memorization');
-                  } else {
-                    console.log('Opening:', module.type);
-                  }
-                }}
-                style={styles.button}
-                contentStyle={styles.buttonContent}>
-                {module.progress > 0 ? 'Continue Learning' : 'Start Learning'}
-              </Button>
-            </Card.Content>
-          </Card>
+              {/* Progress Section */}
+              <View style={styles.progressSection}>
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressLabel}>Progress</Text>
+                  <Text style={styles.progressPercentage}>
+                    {Math.round(module.progress * 100)}%
+                  </Text>
+                </View>
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBarBackground}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {width: `${module.progress * 100}%`},
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Action Button */}
+              <NeubrutalButton
+                title={module.progress > 0 ? 'Continue Learning' : 'Start Learning'}
+                onPress={() => handleModulePress(module)}
+                variant="primary"
+                size="medium"
+                style={styles.actionButton}
+                icon={
+                  <MaterialCommunityIcons
+                    name={module.progress > 0 ? 'play-circle' : 'play'}
+                    size={20}
+                    color={colors.background.default}
+                  />
+                }
+              />
+            </View>
+          </AnimatedCard>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -280,62 +339,122 @@ export const LearningScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: spacing.md,
+    gap: spacing.md,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    ...typography.body1,
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
   },
   header: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   title: {
-    ...typography.h3,
+    ...typography.h2,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   subtitle: {
-    ...typography.body2,
-    opacity: 0.7,
+    ...typography.body1,
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
   },
-  card: {
-    marginBottom: spacing.md,
-    ...islamicShadows.medium,
-    borderRadius: islamicBorderRadius.large,
-    backgroundColor: '#FFFFFF',
+  moduleCard: {
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
+    borderWidth: 3,
+    borderRadius: borderRadius.lg,
+  },
+  moduleContent: {
+    gap: spacing.md,
   },
   moduleHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface.tertiary,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    ...brutalistShadows.small,
+  },
+  moduleHeaderText: {
+    flex: 1,
+    gap: spacing.xs,
   },
   moduleTitle: {
-    flex: 1,
-  },
-  progressText: {
-    ...typography.h4,
+    ...typography.h5,
     fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
   moduleDescription: {
-    marginBottom: spacing.sm,
-    opacity: 0.8,
+    ...typography.body2,
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
+    lineHeight: 20,
   },
-  progressContainer: {
-    marginBottom: spacing.md,
+  progressSection: {
+    gap: spacing.xs,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressLabel: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  progressPercentage: {
+    ...typography.h5,
+    fontWeight: '700',
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
+  },
+  progressBarContainer: {
+    width: '100%',
+  },
+  progressBarBackground: {
+    height: 12,
+    backgroundColor: colors.surface.tertiary,
+    borderRadius: borderRadius.sm,
+    borderWidth: 2,
+    borderColor: colors.surface.tertiary,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.sm,
+  },
+  actionButton: {
     marginTop: spacing.xs,
   },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-  },
-  button: {
-    marginTop: spacing.sm,
-    borderRadius: islamicBorderRadius.medium,
-  },
-  buttonContent: {
-    paddingVertical: spacing.xs,
-  },
 });
-

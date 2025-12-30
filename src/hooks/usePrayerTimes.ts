@@ -61,7 +61,9 @@ export function usePrayerTimes(
     if (!loading || prayerTimes) return; // Don't set timeout if not loading or already have data
     
     const timeout = setTimeout(() => {
-      console.warn('⏱️ Prayer times loading timeout (3s) - using default location');
+      if (__DEV__) {
+        console.warn('⏱️ Prayer times loading timeout (3s) - using default location');
+      }
       setLoading(false);
       // Calculate with default location immediately
       const times = calculatePrayerTimes({
@@ -110,13 +112,19 @@ export function usePrayerTimes(
                 setLocation(finalLocation);
                 console.log('✅ Location obtained successfully');
               } catch (locationError) {
-                console.warn('⚠️ Location request failed or timed out - using default coordinates:', locationError);
+                // Only log in dev mode - location timeout is expected behavior
+                if (__DEV__) {
+                  console.warn('⚠️ Location request failed or timed out - using default coordinates:', locationError);
+                }
                 // Use default location on any error
                 finalLocation = null;
               }
             }
           } catch (locationError) {
-            console.warn('⚠️ Error in location flow - using default coordinates:', locationError);
+            // Only log in dev mode
+            if (__DEV__) {
+              console.warn('⚠️ Error in location flow - using default coordinates:', locationError);
+            }
             // Use default location on any error
             finalLocation = null;
           }
@@ -183,7 +191,9 @@ export function usePrayerTimes(
       // Get location in background and update if successful (non-blocking)
       setTimeout(() => {
         calculateTimes().catch((err) => {
-          console.warn('Background location update failed, keeping defaults:', err);
+          if (__DEV__) {
+            console.warn('Background location update failed, keeping defaults:', err);
+          }
           // Keep default times if location fails - app still works
         });
       }, 100); // Small delay to ensure UI renders first

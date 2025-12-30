@@ -219,32 +219,72 @@ export async function playPhraseAudio(
   volume: number = 80,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Check if it's a local bundle file or a file path
-    const isLocalBundle = !filePath.includes('/') && !filePath.startsWith('file://');
-    
-    const sound = new Sound(
-      isLocalBundle ? filePath : filePath.replace('file://', ''),
-      isLocalBundle ? Sound.MAIN_BUNDLE : '',
-      (error) => {
-        if (error) {
-          console.error('Error loading phrase sound:', error);
-          reject(error);
-          return;
-        }
-
-        sound.setVolume(volume / 100);
-        sound.play((success) => {
-          if (success) {
-            console.log('Prayer phrase played successfully');
-          } else {
-            console.error('Error playing phrase');
-            reject(new Error('Failed to play phrase'));
+    try {
+      // Check if it's a local bundle file or a file path
+      const isLocalBundle = !filePath.includes('/') && !filePath.startsWith('file://');
+      
+      const sound = new Sound(
+        isLocalBundle ? filePath : filePath.replace('file://', ''),
+        isLocalBundle ? Sound.MAIN_BUNDLE : '',
+        (error) => {
+          if (error) {
+            // Only log in dev mode - audio is optional
+            if (__DEV__) {
+              console.warn('Error loading phrase sound:', error);
+            }
+            // Release sound if it was created
+            try {
+              sound.release();
+            } catch (e) {
+              // Ignore release errors
+            }
+            reject(error);
+            return;
           }
-          sound.release();
-          resolve();
-        });
+
+          try {
+            sound.setVolume(volume / 100);
+            sound.play((success) => {
+              if (success) {
+                if (__DEV__) {
+                  console.log('Prayer phrase played successfully');
+                }
+              } else {
+                // Only log in dev mode
+                if (__DEV__) {
+                  console.warn('Error playing phrase');
+                }
+                // Don't reject - just resolve silently
+                // Audio is optional, don't disrupt user experience
+              }
+              try {
+                sound.release();
+              } catch (e) {
+                // Ignore release errors
+              }
+              resolve();
+            });
+          } catch (playError) {
+            // Handle play errors gracefully
+            if (__DEV__) {
+              console.warn('Error setting up sound playback:', playError);
+            }
+            try {
+              sound.release();
+            } catch (e) {
+              // Ignore release errors
+            }
+            resolve(); // Resolve instead of reject - audio is optional
+          }
+        }
+      );
+    } catch (initError) {
+      // Handle initialization errors gracefully
+      if (__DEV__) {
+        console.warn('Error initializing sound:', initError);
       }
-    );
+      reject(initError);
+    }
   });
 }
 
@@ -253,39 +293,103 @@ export async function playPhraseAudio(
  */
 async function playPhraseWithTTS(phrase: PrayerPhrase, volume: number): Promise<void> {
   try {
-    const Tts = require('react-native-tts');
+    // Try to load TTS module - check if it's available
+    let Tts;
+    try {
+      Tts = require('react-native-tts');
+      // Check if TTS is properly initialized and methods exist
+      if (!Tts || typeof Tts.setDefaultLanguage !== 'function') {
+        throw new Error('TTS module not properly initialized');
+      }
+    } catch (moduleError) {
+      if (__DEV__) {
+        console.warn('TTS module not available:', moduleError);
+      }
+      throw new Error('TTS not available');
+    }
+
     const source = PRAYER_PHRASES[phrase];
+    if (!source || !source.arabicText) {
+      throw new Error(`No Arabic text found for phrase: ${phrase}`);
+    }
     
-    // Configure TTS for Arabic
-    await Tts.setDefaultLanguage('ar-SA');
-    await Tts.setDefaultRate(0.5); // Slower for clarity
-    await Tts.setDefaultPitch(1.0);
+    // Configure TTS for Arabic - check if methods exist before calling
+    if (typeof Tts.setDefaultLanguage === 'function') {
+      await Tts.setDefaultLanguage('ar-SA');
+    }
+    if (typeof Tts.setDefaultRate === 'function') {
+      await Tts.setDefaultRate(0.5); // Slower for clarity
+    }
+    if (typeof Tts.setDefaultPitch === 'function') {
+      await Tts.setDefaultPitch(1.0);
+    }
+    
+    // Check if speak method exists
+    if (typeof Tts.speak !== 'function') {
+      throw new Error('TTS speak method not available');
+    }
     
     // Speak the Arabic text
     await Tts.speak(source.arabicText);
     
     // Wait for speech to complete
-    return new Promise((resolve, reject) => {
-      const finishListener = Tts.addEventListener('tts-finish', () => {
-        Tts.removeEventListener('tts-finish', finishListener);
+    return new Promise((resolve) => {
+      // Set up timeout first to ensure we always resolve
+      const timeout = setTimeout(() => {
+        try {
+          if (finishListener) Tts.removeEventListener('tts-finish', finishListener);
+          if (errorListener) Tts.removeEventListener('tts-error', errorListener);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
         resolve();
-      });
+      }, 10000); // 10 second timeout
       
-      const errorListener = Tts.addEventListener('tts-error', (error: any) => {
-        Tts.removeEventListener('tts-error', errorListener);
-        reject(error);
-      });
+      let finishListener: any = null;
+      let errorListener: any = null;
       
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        Tts.removeEventListener('tts-finish', finishListener);
-        Tts.removeEventListener('tts-error', errorListener);
-        resolve();
-      }, 10000);
+      // Set up event listeners if available
+      if (typeof Tts.addEventListener === 'function') {
+        finishListener = Tts.addEventListener('tts-finish', () => {
+          clearTimeout(timeout);
+          try {
+            if (finishListener) Tts.removeEventListener('tts-finish', finishListener);
+            if (errorListener) Tts.removeEventListener('tts-error', errorListener);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          resolve();
+        });
+        
+        errorListener = Tts.addEventListener('tts-error', (error: any) => {
+          clearTimeout(timeout);
+          try {
+            if (finishListener) Tts.removeEventListener('tts-finish', finishListener);
+            if (errorListener) Tts.removeEventListener('tts-error', errorListener);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          // Resolve instead of reject - audio is optional
+          if (__DEV__) {
+            console.warn('TTS error during playback:', error);
+          }
+          resolve();
+        });
+      } else {
+        // If event listeners aren't available, just resolve after a short delay
+        setTimeout(() => {
+          clearTimeout(timeout);
+          resolve();
+        }, 2000);
+      }
     });
   } catch (error) {
-    console.warn('TTS not available for phrase:', error);
-    throw error;
+    // Don't throw - audio is optional, just log in dev mode
+    if (__DEV__) {
+      console.warn('TTS not available for phrase:', error);
+    }
+    // Return silently - don't disrupt user experience
+    return Promise.resolve();
   }
 }
 

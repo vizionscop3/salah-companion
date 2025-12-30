@@ -22,6 +22,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isGuest: boolean; // Guest mode (no account, but can save progress locally)
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (email: string, password: string, displayName?: string) => Promise<AuthResult>;
   // TODO: Re-enable Google Sign-In after configuration
@@ -29,6 +30,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
+  setGuestMode: (isGuest: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false); // Guest mode for users without premium subscription
 
   // Load user on mount
   useEffect(() => {
@@ -164,6 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     user,
     loading,
     isAuthenticated: user !== null,
+    isGuest,
     login: handleLogin,
     register: handleRegister,
     // TODO: Re-enable Google Sign-In after configuration
@@ -171,6 +175,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     logout: handleLogout,
     refreshUser,
     updateUser: handleUpdateUser,
+    setGuestMode: setIsGuest,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

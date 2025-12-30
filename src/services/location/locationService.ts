@@ -27,6 +27,16 @@ export interface LocationError {
 export async function requestLocationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     try {
+      // First check if permission is already granted
+      const checkResult = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      
+      if (checkResult) {
+        return true;
+      }
+
+      // Request permission with proper configuration
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
@@ -37,7 +47,10 @@ export async function requestLocationPermission(): Promise<boolean> {
           buttonPositive: 'OK',
         },
       );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      
+      const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
+      console.log(`Location permission result: ${granted} (granted: ${isGranted})`);
+      return isGranted;
     } catch (err) {
       console.error('Error requesting location permission:', err);
       return false;

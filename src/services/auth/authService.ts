@@ -31,6 +31,7 @@ const STORAGE_KEYS = {
   USER_ID: '@salah_companion:user_id',
   USER_DATA: '@salah_companion:user_data',
   AUTH_TOKEN: '@salah_companion:auth_token',
+  IS_PREMIUM: '@salah_companion:is_premium',
 };
 
 // In-memory user store (temporary - replace with API)

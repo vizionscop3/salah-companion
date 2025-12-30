@@ -33,7 +33,8 @@ export const HomeScreen: React.FC = () => {
   const {currentTheme} = useTheme();
   const navigation = useNavigation();
   const {prayerTimes, nextPrayer, loading, error: prayerError} = usePrayerTimes();
-  const {user} = useAuth();
+  const {user, isGuest} = useAuth();
+  // useProgress now handles guest mode automatically
   const {progress, loading: progressLoading} = useProgress(user?.id || null);
   const {
     unlockedAchievements,
@@ -112,7 +113,7 @@ export const HomeScreen: React.FC = () => {
           index={2}
           style={styles.phase3ActionsCard}
           shadowSize="medium"
-          accessibilityRole="region"
+          accessibilityRole="none"
           accessibilityLabel="Advanced features">
           <Text style={styles.phase3ActionsTitle}>Advanced Features</Text>
           <View style={styles.phase3ActionsList}>

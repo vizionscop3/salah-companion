@@ -76,16 +76,39 @@ export const PrayerTimesScreen: React.FC = () => {
     return null;
   }
 
-  const prayers = [
+  // Validate prayer times are valid Date objects
+  const isValidDate = (date: Date | null | undefined): date is Date => {
+    return date instanceof Date && !isNaN(date.getTime());
+  };
+
+  // Filter out invalid prayer times
+  const validPrayers = [
     {name: 'Fajr', key: 'fajr' as const, time: prayerTimes.fajr},
     {name: 'Dhuhr', key: 'dhuhr' as const, time: prayerTimes.dhuhr},
     {name: 'Asr', key: 'asr' as const, time: prayerTimes.asr},
     {name: 'Maghrib', key: 'maghrib' as const, time: prayerTimes.maghrib},
     {name: 'Isha', key: 'isha' as const, time: prayerTimes.isha},
-  ];
+  ].filter(prayer => isValidDate(prayer.time));
+
+  // If no valid prayers, show error
+  if (validPrayers.length === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Invalid prayer times. Please refresh.</Text>
+          <NeubrutalButton title="Retry" onPress={refresh} size="small" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const prayers = validPrayers;
 
   // Calculate Iqamah time (example: 20 minutes after Adhan)
   const calculateIqamah = (adhanTime: Date) => {
+    if (!isValidDate(adhanTime)) {
+      return '--:--';
+    }
     const iqamahTime = new Date(adhanTime.getTime() + 20 * 60 * 1000);
     return formatPrayerTime(iqamahTime);
   };
@@ -110,13 +133,17 @@ export const PrayerTimesScreen: React.FC = () => {
                 <View style={styles.sunTime}>
                   <MaterialCommunityIcons name="weather-sunny" size={16} color={colors.accent.gold} />
                   <Text style={styles.sunTimeText}>
-                    Sunrise: {formatPrayerTime(prayerTimes.sunrise)}
+                    Sunrise: {prayerTimes.sunrise && prayerTimes.sunrise instanceof Date && !isNaN(prayerTimes.sunrise.getTime()) 
+                      ? formatPrayerTime(prayerTimes.sunrise) 
+                      : '--:--'}
                   </Text>
                 </View>
                 <View style={styles.sunTime}>
                   <MaterialCommunityIcons name="weather-night" size={16} color={colors.accent.blue} />
                   <Text style={styles.sunTimeText}>
-                    Sunset: {formatPrayerTime(prayerTimes.maghrib)}
+                    Sunset: {prayerTimes.maghrib && prayerTimes.maghrib instanceof Date && !isNaN(prayerTimes.maghrib.getTime())
+                      ? formatPrayerTime(prayerTimes.maghrib)
+                      : '--:--'}
                   </Text>
                 </View>
               </View>
@@ -146,6 +173,10 @@ export const PrayerTimesScreen: React.FC = () => {
         {/* Prayer Times List */}
         <View style={styles.prayerList}>
           {prayers.map((prayer, index) => {
+            // Extra safety check - skip if time is invalid
+            if (!prayer.time || !(prayer.time instanceof Date) || isNaN(prayer.time.getTime())) {
+              return null;
+            }
             const isNext = nextPrayer?.prayer === prayer.key;
             const isPassed = prayer.time < new Date();
             const prayerColor = PRAYER_COLORS[prayer.key];
