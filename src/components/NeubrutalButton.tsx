@@ -133,7 +133,11 @@ export const NeubrutalButton: React.FC<NeubrutalButtonProps> = React.memo(({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={1}>
+      activeOpacity={1}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={disabled ? 'Button is disabled' : 'Double tap to activate'}
+      accessibilityState={{disabled: disabled || loading}}>
       {loading ? (
         <ActivityIndicator
           size="small"

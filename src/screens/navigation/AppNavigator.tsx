@@ -4,14 +4,16 @@
  * Sets up the root navigation structure for the app.
  */
 
-import React from 'react';
+import React, {lazy, Suspense} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {ActivityIndicator, View} from 'react-native';
 
-import {HomeScreen} from '@screens/home/HomeScreen';
-import {PrayerTimesScreen} from '@screens/prayer-times/PrayerTimesScreen';
-import {LearningScreen} from '@screens/learning/LearningScreen';
-import {ProfileScreen} from '@screens/profile/ProfileScreen';
+// Lazy load heavy screens for better performance
+const HomeScreen = lazy(() => import('@screens/home/HomeScreen').then(m => ({default: m.HomeScreen})));
+const PrayerTimesScreen = lazy(() => import('@screens/prayer-times/PrayerTimesScreen').then(m => ({default: m.PrayerTimesScreen})));
+const LearningScreen = lazy(() => import('@screens/learning/LearningScreen').then(m => ({default: m.LearningScreen})));
+const ProfileScreen = lazy(() => import('@screens/profile/ProfileScreen').then(m => ({default: m.ProfileScreen})));
 import {GuidedSalahScreen} from '@screens/guided-salah/GuidedSalahScreen';
 import {LoginScreen} from '@screens/auth/LoginScreen';
 import {RegisterScreen} from '@screens/auth/RegisterScreen';
@@ -128,6 +130,18 @@ export const AppNavigator: React.FC = () => {
       </View>
     );
   }
+
+  // Loading component for lazy-loaded screens
+  const LazyScreenWrapper = ({children}: {children: React.ReactNode}) => (
+    <Suspense
+      fallback={
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator size="large" />
+        </View>
+      }>
+      {children}
+    </Suspense>
+  );
 
   return (
     <Stack.Navigator

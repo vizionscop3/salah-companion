@@ -25,6 +25,11 @@ import {
   calculateDistanceToKaaba,
   getCompassDirection,
 } from '@services/qibla/qiblaService';
+import {
+  subscribeToMagnetometer,
+  requestMagnetometerPermission,
+  MagnetometerSubscription,
+} from '@services/qibla/magnetometerService';
 
 const {width} = Dimensions.get('window');
 const COMPASS_SIZE = Math.min(width - spacing.xl * 2, 320);
@@ -41,10 +46,20 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true})
   const [distance, setDistance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [magnetometerActive, setMagnetometerActive] = useState(false);
+  const [magnetometerSubscription, setMagnetometerSubscription] =
+    useState<MagnetometerSubscription | null>(null);
   const needleRotation = useSharedValue(0);
 
   useEffect(() => {
     initializeCompass();
+
+    // Cleanup magnetometer subscription on unmount
+    return () => {
+      if (magnetometerSubscription) {
+        magnetometerSubscription.unsubscribe();
+      }
+    };
   }, []);
 
   useEffect(() => {
