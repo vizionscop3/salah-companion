@@ -172,10 +172,31 @@ export const HomeScreen: React.FC = () => {
     );
   };
 
-  // Show loading state while data is being fetched (with timeout protection)
-  // Only show loading if we're actually waiting for critical data
-  const isInitialLoading = loading && !prayerTimes && !prayerError;
-  const isProgressLoading = progressLoading && user?.id && !progress;
+  // Show loading state with timeout protection (3 seconds max to match usePrayerTimes)
+  // Add a maximum loading time to prevent infinite loops
+  const [maxLoadingReached, setMaxLoadingReached] = useState(false);
+  
+  useEffect(() => {
+    // Reset maxLoadingReached when loading states change
+    if (!loading && !progressLoading) {
+      setMaxLoadingReached(false);
+      return;
+    }
+    
+    const timeout = setTimeout(() => {
+      if (loading || progressLoading) {
+        console.warn('HomeScreen: Maximum loading time reached (3s), showing content anyway');
+        setMaxLoadingReached(true);
+      }
+    }, 3000); // 3 second max loading time (matches usePrayerTimes timeout)
+    
+    return () => clearTimeout(timeout);
+  }, [loading, progressLoading]);
+  
+  // Only show loading if we're actually waiting AND haven't exceeded max time
+  // Also allow showing content if we have prayer times even if progress is loading
+  const isInitialLoading = loading && !prayerTimes && !prayerError && !maxLoadingReached;
+  const isProgressLoading = progressLoading && user?.id && !progress && !maxLoadingReached && !prayerTimes;
   
   if (isInitialLoading || isProgressLoading) {
     return (
