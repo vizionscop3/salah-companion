@@ -5,7 +5,7 @@
  */
 
 import React, {createContext, useContext, useState, useCallback, useEffect} from 'react';
-import {useColorScheme, useAccessibilityInfo} from 'react-native';
+import {useColorScheme, AccessibilityInfo} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {theme, colors} from '@constants/theme';
 
@@ -31,7 +31,6 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   children,
 }) => {
   const systemColorScheme = useColorScheme();
-  const {reduceMotionEnabled, screenReaderEnabled} = useAccessibilityInfo();
   const [mode, setMode] = useState<ThemeMode>('auto');
   const [accessibilityMode, setAccessibilityModeState] =
     useState<AccessibilityMode>('normal');
