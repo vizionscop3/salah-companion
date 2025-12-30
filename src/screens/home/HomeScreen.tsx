@@ -6,7 +6,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTheme} from '@context/ThemeContext';
 import {spacing, typography, colors} from '@constants/theme';
@@ -54,7 +54,8 @@ export const HomeScreen: React.FC = () => {
         }
       });
     }
-  }, [user?.id, progress, checkForNewAchievements]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, progress]);
 
   const renderContent = () => {
     if (activeTab === 'notifications') {
@@ -170,6 +171,18 @@ export const HomeScreen: React.FC = () => {
       </>
     );
   };
+
+  // Show loading state while data is being fetched
+  if (loading || progressLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator size="large" color={currentTheme.colors.primary} />
+          <Text style={[styles.subtitle, {marginTop: spacing.md}]}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

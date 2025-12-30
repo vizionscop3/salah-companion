@@ -4,15 +4,15 @@
  * Sets up the root navigation structure for the app.
  */
 
-import React, {lazy, Suspense} from 'react';
+import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
-// Lazy load heavy screens for better performance
-const HomeScreen = lazy(() => import('@screens/home/HomeScreen').then(m => ({default: m.HomeScreen})));
-const PrayerTimesScreen = lazy(() => import('@screens/prayer-times/PrayerTimesScreen').then(m => ({default: m.PrayerTimesScreen})));
-const LearningScreen = lazy(() => import('@screens/learning/LearningScreen').then(m => ({default: m.LearningScreen})));
-const ProfileScreen = lazy(() => import('@screens/profile/ProfileScreen').then(m => ({default: m.ProfileScreen})));
+// Import screens directly (lazy loading removed to fix loading issues)
+import {HomeScreen} from '@screens/home/HomeScreen';
+import {PrayerTimesScreen} from '@screens/prayer-times/PrayerTimesScreen';
+import {LearningScreen} from '@screens/learning/LearningScreen';
+import {ProfileScreen} from '@screens/profile/ProfileScreen';
 import {GuidedSalahScreen} from '@screens/guided-salah/GuidedSalahScreen';
 import {LoginScreen} from '@screens/auth/LoginScreen';
 import {RegisterScreen} from '@screens/auth/RegisterScreen';
@@ -74,80 +74,44 @@ const MainTabs: React.FC = () => {
       }}>
       <Tab.Screen
         name="Home"
+        component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="home" size={size} color={color} />
           ),
-        }}>
-        {props => (
-          <Suspense
-            fallback={
-              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                <ActivityIndicator size="large" />
-              </View>
-            }>
-            <HomeScreen {...props} />
-          </Suspense>
-        )}
-      </Tab.Screen>
+        }}
+      />
       <Tab.Screen
         name="PrayerTimes"
+        component={PrayerTimesScreen}
         options={{
           tabBarLabel: 'Prayer Time',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="clock-outline" size={size} color={color} />
           ),
-        }}>
-        {props => (
-          <Suspense
-            fallback={
-              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                <ActivityIndicator size="large" />
-              </View>
-            }>
-            <PrayerTimesScreen {...props} />
-          </Suspense>
-        )}
-      </Tab.Screen>
+        }}
+      />
       <Tab.Screen
         name="Learning"
+        component={LearningScreen}
         options={{
           tabBarLabel: 'Learning',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="book-open-variant" size={size} color={color} />
           ),
-        }}>
-        {props => (
-          <Suspense
-            fallback={
-              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                <ActivityIndicator size="large" />
-              </View>
-            }>
-            <LearningScreen {...props} />
-          </Suspense>
-        )}
-      </Tab.Screen>
+        }}
+      />
       <Tab.Screen
         name="Profile"
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="account" size={size} color={color} />
           ),
-        }}>
-        {props => (
-          <Suspense
-            fallback={
-              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                <ActivityIndicator size="large" />
-              </View>
-            }>
-            <ProfileScreen {...props} />
-          </Suspense>
-        )}
-      </Tab.Screen>
+        }}
+      />
     </Tab.Navigator>
   );
 };
