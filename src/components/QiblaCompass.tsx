@@ -1,14 +1,20 @@
 /**
- * Qibla Compass Component
+ * Qibla Compass Component - Material Neubrutomorphism
  *
  * Interactive compass showing Qibla direction with device orientation.
+ * Features Material Neubrutomorphism design with triple-layer shadows.
  */
 
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, Animated, Dimensions} from 'react-native';
-import {Card, Button, ActivityIndicator} from 'react-native-paper';
-import {useTheme} from '@context/ThemeContext';
-import {spacing, typography, colors, elevation} from '@constants/theme';
+import {View, Text, StyleSheet, Dimensions, ActivityIndicator} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import {NeubrutalCard, NeubrutalButton} from './index';
+import {spacing, typography, colors, borderRadius, brutalistShadows} from '@constants/theme';
 import {
   getCurrentLocation,
   requestLocationPermission,
@@ -21,38 +27,30 @@ import {
 } from '@services/qibla/qiblaService';
 
 const {width} = Dimensions.get('window');
-const COMPASS_SIZE = Math.min(width - spacing.xl * 2, 300);
+const COMPASS_SIZE = Math.min(width - spacing.xl * 2, 320);
+const COMPASS_FACE_SIZE = COMPASS_SIZE - 40;
 
 export interface QiblaCompassProps {
   showDistance?: boolean;
 }
 
 export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true}) => {
-  const {currentTheme} = useTheme();
   const [location, setLocation] = useState<Location | null>(null);
   const [qiblaBearing, setQiblaBearing] = useState<number | null>(null);
   const [deviceHeading, setDeviceHeading] = useState<number>(0);
   const [distance, setDistance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [compassRotation] = useState(new Animated.Value(0));
+  const needleRotation = useSharedValue(0);
 
   useEffect(() => {
     initializeCompass();
-    return () => {
-      // Cleanup if needed
-    };
   }, []);
 
   useEffect(() => {
-    if (qiblaBearing !== null && deviceHeading !== null) {
-      // Calculate relative angle: Qibla direction relative to device heading
+    if (qiblaBearing !== null) {
       const relativeAngle = (qiblaBearing - deviceHeading + 360) % 360;
-      Animated.timing(compassRotation, {
-        toValue: relativeAngle,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      needleRotation.value = withTiming(relativeAngle, {duration: 300});
     }
   }, [qiblaBearing, deviceHeading]);
 
@@ -64,20 +62,53 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true})
       // Request location permission
       const hasPermission = await requestLocationPermission();
       if (!hasPermission) {
-        setError('Location permission is required to show Qibla direction. Please enable location access in settings.');
+        setError(
+          'Location permission is required to show Qibla direction. Please enable location access in settings.',
+        );
         setLoading(false);
-        return; // Don't throw - just show error message
+        return;
       }
 
-      // Get current location
-      const currentLocation = await getCurrentLocation();
+      // Get current location with timeout handling
+      let currentLocation: Location;
+      try {
+        currentLocation = await Promise.race([
+          getCurrentLocation(),
+          new Promise<Location>((_, reject) =>
+            setTimeout(() => reject(new Error('Location request timed out')), 15000),
+          ),
+        ]);
+      } catch (locationError) {
+        const error = locationError as any;
+        if (error.code === 1) {
+          // Permission denied
+          setError(
+            'Location permission denied. Please enable location access in your device settings.',
+          );
+        } else if (error.code === 2) {
+          // Position unavailable
+          setError(
+            'Unable to get your location. Please check your GPS settings and try again.',
+          );
+        } else if (error.code === 3) {
+          // Timeout
+          setError(
+            'Location request timed out. Please check your GPS signal and try again.',
+          );
+        } else {
+          setError(
+            'Failed to get your location. Please check your GPS settings and try again.',
+          );
+        }
+        setLoading(false);
+        return;
+      }
+
       setLocation(currentLocation);
 
-      // Calculate Qibla bearing
       const bearing = calculateQiblaFromLocation(currentLocation);
       setQiblaBearing(bearing);
 
-      // Calculate distance
       if (showDistance) {
         const dist = calculateDistanceToKaaba(
           currentLocation.latitude,
@@ -86,139 +117,170 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({showDistance = true})
         setDistance(dist);
       }
 
-      // Initialize device heading (simplified - in production, use device magnetometer)
-      // For now, we'll use a placeholder. In production, integrate with react-native-sensors
-      // or similar library for magnetometer access
       setDeviceHeading(0);
-
       setLoading(false);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to initialize compass';
+        err instanceof Error
+          ? err.message
+          : 'Failed to initialize compass. Please try again.';
       setError(errorMessage);
       setLoading(false);
-      // Don't log as error - this is expected if permission is denied
-      console.warn('Compass initialization warning:', err);
+      if (__DEV__) {
+        console.warn('Compass initialization error:', err);
+      }
     }
   };
 
-  const handleRefresh = () => {
-    initializeCompass();
-  };
+  const needleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${needleRotation.value}deg`}],
+  }));
 
   if (loading) {
     return (
-      <Card style={[styles.card, elevation[2]]}>
-        <Card.Content style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={currentTheme.colors.primary} />
-          <Text style={[styles.loadingText, {color: currentTheme.colors.text}]}>
-            Initializing compass...
-          </Text>
-        </Card.Content>
-      </Card>
+      <NeubrutalCard style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Initializing compass...</Text>
+        </View>
+      </NeubrutalCard>
     );
   }
 
   if (error) {
     return (
-      <Card style={[styles.card, elevation[2]]}>
-        <Card.Content style={styles.errorContainer}>
-          <Text style={[styles.errorText, {color: currentTheme.colors.error}]}>
-            {error}
-          </Text>
-          <Button mode="contained" onPress={handleRefresh} style={styles.retryButton}>
-            Retry
-          </Button>
-        </Card.Content>
-      </Card>
+      <NeubrutalCard style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.errorActions}>
+            <NeubrutalButton
+              title="Retry"
+              onPress={initializeCompass}
+              variant="primary"
+              size="medium"
+              style={styles.retryButton}
+            />
+            {error.includes('permission') && (
+              <NeubrutalButton
+                title="Open Settings"
+                onPress={() => {
+                  // Note: In production, you might want to use Linking.openSettings()
+                  // For now, just retry which will show the permission dialog again
+                  initializeCompass();
+                }}
+                variant="outline"
+                size="medium"
+                style={styles.settingsButton}
+              />
+            )}
+          </View>
+        </View>
+      </NeubrutalCard>
     );
   }
 
   const compassDirection = qiblaBearing !== null ? getCompassDirection(qiblaBearing) : 'N';
-  const arrowRotation = compassRotation.interpolate({
-    inputRange: [0, 360],
-    outputRange: ['0deg', '360deg'],
-  });
 
   return (
-    <Card style={[styles.card, elevation[2]]}>
-      <Card.Content style={styles.content}>
-        <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
-            Qibla Direction
-          </Text>
-          {qiblaBearing !== null && (
-            <Text style={[styles.bearing, {color: currentTheme.colors.primary}]}>
-              {Math.round(qiblaBearing)}° {compassDirection}
-            </Text>
-          )}
-        </View>
-
-        {/* Compass */}
-        <View style={styles.compassContainer}>
-          <View style={[styles.compass, {width: COMPASS_SIZE, height: COMPASS_SIZE}]}>
-            {/* Compass background circle */}
-            <View style={styles.compassCircle}>
-              {/* Cardinal directions */}
-              <Text style={[styles.direction, styles.north]}>N</Text>
-              <Text style={[styles.direction, styles.east]}>E</Text>
-              <Text style={[styles.direction, styles.south]}>S</Text>
-              <Text style={[styles.direction, styles.west]}>W</Text>
-
-              {/* Qibla arrow */}
-              <Animated.View
+    <View style={styles.wrapper}>
+      <NeubrutalCard
+        style={styles.compassWrapper}
+        borderWidth={4}
+        shadowSize="large"
+        onPress={undefined}>
+        <View style={[styles.compassFace, {width: COMPASS_FACE_SIZE, height: COMPASS_FACE_SIZE}]}>
+          {/* Direction Markers */}
+          {['N', 'E', 'S', 'W'].map((dir, i) => (
+            <View
+              key={dir}
+              style={[
+                styles.directionMarker,
+                {
+                  transform: [
+                    {rotate: `${i * 90}deg`},
+                    {translateY: -(COMPASS_FACE_SIZE / 2 - 20)},
+                  ],
+                },
+              ]}>
+              <Text
                 style={[
-                  styles.arrowContainer,
+                  styles.directionText,
                   {
-                    transform: [{rotate: arrowRotation}],
+                    transform: [{rotate: `${-i * 90}deg`}],
                   },
                 ]}>
-                <View style={styles.arrow}>
-                  <View style={[styles.arrowHead, {borderBottomColor: colors.primary.main}]} />
-                  <View style={styles.arrowShaft} />
-                </View>
-              </Animated.View>
-
-              {/* Center dot */}
-              <View style={styles.centerDot} />
+                {dir}
+              </Text>
             </View>
+          ))}
+
+          {/* Decorative Dots */}
+          {Array.from({length: 8}).map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                {
+                  transform: [
+                    {rotate: `${i * 45 + 22.5}deg`},
+                    {translateY: -(COMPASS_FACE_SIZE / 2 - 15)},
+                  ],
+                },
+              ]}
+            />
+          ))}
+
+          {/* Kaaba Icon */}
+          <View style={styles.kaabaIcon}>
+            <View style={styles.kaabaBase} />
+            <View style={styles.kaabaTop} />
+            <View style={styles.kaabaCenter} />
           </View>
+
+          {/* Compass Needle */}
+          <Animated.View style={[styles.compassNeedle, needleAnimatedStyle]}>
+            <View style={[styles.needleNorth, {borderBottomColor: colors.primary.main}]} />
+            <View style={styles.needleSouth} />
+          </Animated.View>
+
+          {/* Center Dot */}
+          <View style={styles.centerDot} />
         </View>
 
-        {/* Distance */}
-        {showDistance && distance !== null && (
-          <View style={styles.distanceContainer}>
-            <Text style={[styles.distanceLabel, {color: currentTheme.colors.text}]}>
-              Distance to Kaaba
-            </Text>
-            <Text style={[styles.distanceValue, {color: currentTheme.colors.primary}]}>
-              {distance.toFixed(0)} km
-            </Text>
+        {/* Degree Display */}
+        {qiblaBearing !== null && (
+          <View style={styles.degreeDisplay}>
+            <Text style={styles.degreeText}>{Math.round(qiblaBearing)}°</Text>
           </View>
         )}
+      </NeubrutalCard>
 
-        {/* Refresh button */}
-        <Button
-          mode="outlined"
-          onPress={handleRefresh}
-          icon="refresh"
-          style={styles.refreshButton}>
-          Refresh
-        </Button>
-      </Card.Content>
-    </Card>
+      {/* Info Text */}
+      <Text style={styles.infoText}>
+        Point your device north to find Qibla direction
+      </Text>
+
+      {/* Distance */}
+      {showDistance && distance !== null && (
+        <View style={styles.distanceContainer}>
+          <Text style={styles.distanceLabel}>Distance to Kaaba</Text>
+          <Text style={styles.distanceValue}>{distance.toFixed(0)} km</Text>
+        </View>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing.md,
-    borderRadius: 12,
-    backgroundColor: colors.surface.main,
-  },
-  content: {
-    padding: spacing.lg,
+  wrapper: {
     alignItems: 'center',
+    paddingVertical: spacing.xl,
+    gap: spacing.lg,
+  },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 200,
   },
   loadingContainer: {
     padding: spacing.xl,
@@ -226,6 +288,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body1,
+    color: colors.text.secondary,
     marginTop: spacing.md,
   },
   errorContainer: {
@@ -234,114 +297,173 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.body1,
+    color: colors.error.main,
     textAlign: 'center',
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
   },
-  retryButton: {
+  errorActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
     marginTop: spacing.sm,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  retryButton: {
+    flex: 1,
   },
-  title: {
-    ...typography.h4,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
+  settingsButton: {
+    flex: 1,
   },
-  bearing: {
-    ...typography.h5,
-    fontWeight: '700',
-  },
-  compassContainer: {
-    marginVertical: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compass: {
-    position: 'relative',
-  },
-  compassCircle: {
-    width: '100%',
-    height: '100%',
+  compassWrapper: {
+    width: COMPASS_SIZE,
+    height: COMPASS_SIZE,
     borderRadius: COMPASS_SIZE / 2,
-    borderWidth: 3,
+    padding: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface.secondary,
     borderColor: colors.primary.main,
-    backgroundColor: colors.surface.elevated,
+  },
+  compassFace: {
+    borderRadius: COMPASS_FACE_SIZE / 2,
+    backgroundColor: colors.surface.tertiary,
+    borderWidth: 2,
+    borderColor: 'rgba(61, 217, 197, 0.2)',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
   },
-  direction: {
+  directionMarker: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -10,
+    marginTop: -10,
+  },
+  directionText: {
     ...typography.h6,
     fontWeight: '700',
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
+  },
+  dot: {
     position: 'absolute',
-    color: colors.text.primary,
+    top: '50%',
+    left: '50%',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary.main,
+    marginLeft: -3,
+    marginTop: -3,
+    opacity: 0.5,
   },
-  north: {
-    top: spacing.sm,
-  },
-  east: {
-    right: spacing.sm,
-  },
-  south: {
-    bottom: spacing.sm,
-  },
-  west: {
-    left: spacing.sm,
-  },
-  arrowContainer: {
+  kaabaIcon: {
     position: 'absolute',
-    width: '100%',
-    height: '100%',
+    width: 60,
+    height: 60,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
-  arrow: {
-    width: 4,
-    height: '40%',
+  kaabaBase: {
+    width: 30,
+    height: 25,
+    backgroundColor: colors.text.secondary,
+    opacity: 0.3,
+    borderRadius: 2,
+  },
+  kaabaTop: {
+    width: 24,
+    height: 3,
+    backgroundColor: colors.text.secondary,
+    marginBottom: 2,
+    borderRadius: 1,
+  },
+  kaabaCenter: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.primary.main,
     position: 'absolute',
-    alignItems: 'center',
   },
-  arrowHead: {
+  compassNeedle: {
+    position: 'absolute',
+    width: 8,
+    height: COMPASS_FACE_SIZE * 0.4,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    zIndex: 2,
+  },
+  needleNorth: {
     width: 0,
     height: 0,
     borderLeftWidth: 8,
     borderRightWidth: 8,
-    borderBottomWidth: 30,
+    borderBottomWidth: COMPASS_FACE_SIZE * 0.2,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    position: 'absolute',
-    top: 0,
   },
-  arrowShaft: {
-    width: 4,
-    height: '60%',
-    backgroundColor: colors.primary.main,
-    marginTop: 30,
+  needleSouth: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: COMPASS_FACE_SIZE * 0.15,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: colors.text.muted,
+    marginTop: COMPASS_FACE_SIZE * 0.2,
   },
   centerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: colors.primary.main,
+    borderWidth: 3,
+    borderColor: colors.background.default,
     position: 'absolute',
+    zIndex: 3,
+    ...brutalistShadows.small,
+  },
+  degreeDisplay: {
+    position: 'absolute',
+    bottom: -50,
+    left: '50%',
+    marginLeft: -30,
+    backgroundColor: colors.surface.tertiary,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    ...brutalistShadows.small,
+  },
+  degreeText: {
+    ...typography.h4,
+    fontWeight: '800',
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
+  },
+  infoText: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 280,
   },
   distanceContainer: {
-    marginTop: spacing.lg,
     alignItems: 'center',
+    gap: spacing.xs,
   },
   distanceLabel: {
     ...typography.body2,
+    color: colors.text.secondary,
     opacity: 0.7,
-    marginBottom: spacing.xs,
   },
   distanceValue: {
     ...typography.h5,
     fontWeight: '700',
-  },
-  refreshButton: {
-    marginTop: spacing.md,
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
   },
 });
-

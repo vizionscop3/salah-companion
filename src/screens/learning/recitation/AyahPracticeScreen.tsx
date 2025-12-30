@@ -7,15 +7,11 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ScrollView, Text} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  Card,
-  Title,
-  Paragraph,
-  Button,
-  ActivityIndicator,
-} from 'react-native-paper';
+import {ActivityIndicator} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
+import {spacing, typography, colors} from '@constants/theme';
+import {NeubrutalCard, NeubrutalButton} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '@context/AuthContext';
 import {recordingService} from '@services/recitation/recordingService';
 import {
@@ -170,8 +166,8 @@ export const AyahPracticeScreen: React.FC<AyahPracticeScreenProps> = ({route}) =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-          <Paragraph style={styles.loadingText}>Loading ayah...</Paragraph>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Loading ayah...</Text>
         </View>
       </SafeAreaView>
     );
@@ -181,12 +177,16 @@ export const AyahPracticeScreen: React.FC<AyahPracticeScreenProps> = ({route}) =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Paragraph style={styles.errorText}>
+          <Text style={styles.errorText}>
             {loadError || 'Failed to load ayah'}
-          </Paragraph>
-          <Button mode="contained" onPress={loadAyah} style={styles.retryButton}>
-            Retry
-          </Button>
+          </Text>
+          <NeubrutalButton
+            title="Retry"
+            onPress={loadAyah}
+            variant="primary"
+            size="medium"
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -198,153 +198,169 @@ export const AyahPracticeScreen: React.FC<AyahPracticeScreenProps> = ({route}) =
 
   const accuracyColor = feedback
     ? feedback.overallAccuracy >= 90
-      ? '#4CAF50'
+      ? colors.success.main
       : feedback.overallAccuracy >= 70
-      ? '#FF9800'
-      : '#F44336'
+      ? colors.warning.main
+      : colors.error.main
     : undefined;
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Title style={styles.title}>Ayah Practice</Title>
-          <Paragraph style={styles.subtitle}>
+          <Text style={styles.title}>Ayah Practice</Text>
+          <Text style={styles.subtitle}>
             Surah {surahNumber}, Ayah {ayahNumber}
-          </Paragraph>
+          </Text>
           {translationError && (
-            <Paragraph style={styles.translationError}>{translationError}</Paragraph>
+            <Text style={styles.translationError}>{translationError}</Text>
           )}
         </View>
 
-        <Card style={[styles.ayahCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <View style={styles.ayahContainer}>
-              <Text style={styles.arabicText}>{ayah?.text || ''}</Text>
-              {ayah?.transliteration && (
-                <Paragraph style={styles.transliteration}>
-                  {ayah.transliteration}
-                </Paragraph>
-              )}
-              {ayah && ayah.translations.length > 0 && (
-                <View style={styles.translationsContainer}>
-                  {ayah.translations.map(t => (
-                    <View key={`${t.id}-${t.resourceId}`} style={styles.translationBlock}>
-                      <Paragraph style={styles.translation}>{t.text}</Paragraph>
-                      {(t.resourceName || t.authorName) && (
-                        <Paragraph style={styles.translationMeta}>
-                          {t.resourceName}
-                          {t.authorName ? ` — ${t.authorName}` : ''}
-                        </Paragraph>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.actions}>
-              <Button
-                mode="outlined"
-                icon="play"
-                onPress={handlePlayReference}
-                style={styles.actionButton}>
-                Play Reference
-              </Button>
-            </View>
-          </Card.Content>
-        </Card>
-
-        <Card style={[styles.recordingCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <Title style={styles.sectionTitle}>Record Your Recitation</Title>
-            
-            {isRecording ? (
-              <View style={styles.recordingContainer}>
-                <ActivityIndicator size="large" color={currentTheme.colors.error} />
-                <Paragraph style={styles.recordingText}>Recording...</Paragraph>
-                <Button
-                  mode="contained"
-                  buttonColor={currentTheme.colors.error}
-                  onPress={handleStopRecording}
-                  style={styles.stopButton}>
-                  Stop Recording
-                </Button>
-              </View>
-            ) : (
-              <Button
-                mode="contained"
-                icon="microphone"
-                onPress={handleStartRecording}
-                disabled={isAnalyzing}
-                style={styles.recordButton}>
-                {isAnalyzing ? 'Analyzing...' : 'Start Recording'}
-              </Button>
+        <NeubrutalCard style={styles.ayahCard} shadowSize="large">
+          <View style={styles.ayahContainer}>
+            <Text style={styles.arabicText}>{ayah?.text || ''}</Text>
+            {ayah?.transliteration && (
+              <Text style={styles.transliteration}>
+                {ayah.transliteration}
+              </Text>
             )}
-
-            {isAnalyzing && (
-              <View style={styles.analyzingContainer}>
-                <ActivityIndicator size="small" />
-                <Paragraph style={styles.analyzingText}>Analyzing your recitation...</Paragraph>
+            {ayah && ayah.translations.length > 0 && (
+              <View style={styles.translationsContainer}>
+                {ayah.translations.map(t => (
+                  <View key={`${t.id}-${t.resourceId}`} style={styles.translationBlock}>
+                    <Text style={styles.translation}>{t.text}</Text>
+                    {(t.resourceName || t.authorName) && (
+                      <Text style={styles.translationMeta}>
+                        {t.resourceName}
+                        {t.authorName ? ` — ${t.authorName}` : ''}
+                      </Text>
+                    )}
+                  </View>
+                ))}
               </View>
             )}
-          </Card.Content>
-        </Card>
+          </View>
+
+          <View style={styles.actions}>
+            <NeubrutalButton
+              title="Play Reference"
+              onPress={handlePlayReference}
+              variant="outline"
+              size="medium"
+              icon={
+                <MaterialCommunityIcons
+                  name="play"
+                  size={20}
+                  color={colors.primary.main}
+                />
+              }
+              style={styles.actionButton}
+            />
+          </View>
+        </NeubrutalCard>
+
+        <NeubrutalCard style={styles.recordingCard} shadowSize="medium">
+          <Text style={styles.sectionTitle}>Record Your Recitation</Text>
+          
+          {isRecording ? (
+            <View style={styles.recordingContainer}>
+              <ActivityIndicator size="large" color={colors.error.main} />
+              <Text style={styles.recordingText}>Recording...</Text>
+              <NeubrutalButton
+                title="Stop Recording"
+                onPress={handleStopRecording}
+                variant="primary"
+                size="large"
+                icon={
+                  <MaterialCommunityIcons
+                    name="stop"
+                    size={20}
+                    color={colors.background.default}
+                  />
+                }
+                style={styles.stopButton}
+              />
+            </View>
+          ) : (
+            <NeubrutalButton
+              title={isAnalyzing ? 'Analyzing...' : 'Start Recording'}
+              onPress={handleStartRecording}
+              variant="primary"
+              size="large"
+              disabled={isAnalyzing}
+              loading={isAnalyzing}
+              icon={
+                <MaterialCommunityIcons
+                  name="microphone"
+                  size={20}
+                  color={colors.background.default}
+                />
+              }
+              style={styles.recordButton}
+            />
+          )}
+
+          {isAnalyzing && (
+            <View style={styles.analyzingContainer}>
+              <ActivityIndicator size="small" color={colors.primary.main} />
+              <Text style={styles.analyzingText}>Analyzing your recitation...</Text>
+            </View>
+          )}
+        </NeubrutalCard>
 
         {feedback && (
-          <Card style={[styles.feedbackCard, {backgroundColor: currentTheme.colors.surface}]}>
-            <Card.Content>
-              <Title style={styles.sectionTitle}>Feedback</Title>
-              
-              <View style={styles.accuracyContainer}>
-                <Paragraph style={styles.accuracyLabel}>Overall Accuracy</Paragraph>
-                <View style={[styles.accuracyCircle, {borderColor: accuracyColor}]}>
-                  <Text style={[styles.accuracyScore, {color: accuracyColor}]}>
-                    {Math.round(feedback.overallAccuracy)}%
-                  </Text>
-                </View>
+          <NeubrutalCard style={styles.feedbackCard} shadowSize="medium">
+            <Text style={styles.sectionTitle}>Feedback</Text>
+            
+            <View style={styles.accuracyContainer}>
+              <Text style={styles.accuracyLabel}>Overall Accuracy</Text>
+              <View style={[styles.accuracyCircle, {borderColor: accuracyColor}]}>
+                <Text style={[styles.accuracyScore, {color: accuracyColor}]}>
+                  {Math.round(feedback.overallAccuracy)}%
+                </Text>
               </View>
+            </View>
 
-              {feedback.tajweedScore !== undefined && (
-                <View style={styles.tajweedContainer}>
-                  <Paragraph style={styles.tajweedLabel}>Tajweed Score</Paragraph>
-                  <Paragraph style={styles.tajweedScore}>
-                    {Math.round(feedback.tajweedScore)}%
-                  </Paragraph>
-                </View>
-              )}
+            {feedback.tajweedScore !== undefined && (
+              <View style={styles.tajweedContainer}>
+                <Text style={styles.tajweedLabel}>Tajweed Score</Text>
+                <Text style={styles.tajweedScore}>
+                  {Math.round(feedback.tajweedScore)}%
+                </Text>
+              </View>
+            )}
 
-              {feedback.commonIssues && feedback.commonIssues.length > 0 && (
-                <View style={styles.issuesContainer}>
-                  <Paragraph style={styles.issuesTitle}>Areas to Improve:</Paragraph>
-                  {feedback.commonIssues.map((issue, index) => (
-                    <View key={index} style={styles.issueItem}>
-                      <Paragraph style={styles.issueText}>• {issue}</Paragraph>
-                    </View>
-                  ))}
-                </View>
-              )}
+            {feedback.commonIssues && feedback.commonIssues.length > 0 && (
+              <View style={styles.issuesContainer}>
+                <Text style={styles.issuesTitle}>Areas to Improve:</Text>
+                {feedback.commonIssues.map((issue, index) => (
+                  <View key={index} style={styles.issueItem}>
+                    <Text style={styles.issueText}>• {issue}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
-              {feedback.words && feedback.words.length > 0 && (
-                <View style={styles.wordsContainer}>
-                  <Paragraph style={styles.wordsTitle}>Word-by-Word Analysis:</Paragraph>
-                  {feedback.words.map((word, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.wordItem,
-                        word.needsWork && styles.wordItemNeedsWork,
-                      ]}>
-                      <Text style={styles.wordArabic}>{word.arabicText}</Text>
-                      <Paragraph style={styles.wordAccuracy}>
-                        {Math.round(word.accuracy)}%
-                      </Paragraph>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </Card.Content>
-          </Card>
+            {feedback.words && feedback.words.length > 0 && (
+              <View style={styles.wordsContainer}>
+                <Text style={styles.wordsTitle}>Word-by-Word Analysis:</Text>
+                {feedback.words.map((word, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.wordItem,
+                      word.needsWork && styles.wordItemNeedsWork,
+                    ]}>
+                    <Text style={styles.wordArabic}>{word.arabicText}</Text>
+                    <Text style={styles.wordAccuracy}>
+                      {Math.round(word.accuracy)}%
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </NeubrutalCard>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -354,7 +370,7 @@ export const AyahPracticeScreen: React.FC<AyahPracticeScreenProps> = ({route}) =
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
@@ -369,6 +385,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
+    color: colors.text.primary,
+    ...typography.body1,
   },
   errorContainer: {
     flex: 1,
@@ -379,7 +397,8 @@ const styles = StyleSheet.create({
   errorText: {
     marginBottom: spacing.md,
     textAlign: 'center',
-    color: '#F44336',
+    color: colors.error.main,
+    ...typography.body1,
   },
   retryButton: {
     marginTop: spacing.sm,
@@ -389,15 +408,21 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h3,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   subtitle: {
     ...typography.body1,
+    color: colors.text.secondary,
     opacity: 0.7,
   },
   ayahCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   ayahContainer: {
     alignItems: 'center',
@@ -409,12 +434,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
     lineHeight: 48,
+    color: colors.text.primary,
   },
   translation: {
     ...typography.body1,
     textAlign: 'center',
     opacity: 0.8,
     fontStyle: 'italic',
+    color: colors.text.secondary,
   },
   translationsContainer: {
     marginTop: spacing.sm,
@@ -428,10 +455,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.6,
     marginTop: spacing.xs,
+    color: colors.text.secondary,
   },
   translationError: {
     ...typography.body2,
-    color: '#F44336',
+    color: colors.error.main,
     marginTop: spacing.xs,
   },
   transliteration: {
@@ -441,7 +469,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.md,
     fontStyle: 'italic',
-    color: '#666',
+    color: colors.text.secondary,
   },
   actions: {
     marginTop: spacing.sm,
@@ -451,11 +479,16 @@ const styles = StyleSheet.create({
   },
   recordingCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   sectionTitle: {
     ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
+    fontFamily: 'Poppins',
   },
   recordingContainer: {
     alignItems: 'center',
@@ -464,6 +497,8 @@ const styles = StyleSheet.create({
   recordingText: {
     marginTop: spacing.sm,
     marginBottom: spacing.md,
+    color: colors.text.primary,
+    ...typography.body1,
   },
   stopButton: {
     marginTop: spacing.sm,
@@ -479,10 +514,14 @@ const styles = StyleSheet.create({
   },
   analyzingText: {
     marginLeft: spacing.sm,
+    color: colors.text.secondary,
+    ...typography.body2,
   },
   feedbackCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   accuracyContainer: {
     alignItems: 'center',
@@ -491,6 +530,7 @@ const styles = StyleSheet.create({
   accuracyLabel: {
     ...typography.body1,
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   accuracyCircle: {
     width: 100,
@@ -508,16 +548,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
     padding: spacing.sm,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surface.tertiary,
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
   },
   tajweedLabel: {
     ...typography.body2,
     marginBottom: spacing.xs,
+    color: colors.text.secondary,
   },
   tajweedScore: {
     ...typography.h4,
     fontWeight: 'bold',
+    color: colors.text.primary,
   },
   issuesContainer: {
     marginTop: spacing.md,
@@ -526,12 +570,14 @@ const styles = StyleSheet.create({
     ...typography.body1,
     fontWeight: '600',
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   issueItem: {
     marginBottom: spacing.xs,
   },
   issueText: {
     ...typography.body2,
+    color: colors.text.secondary,
   },
   wordsContainer: {
     marginTop: spacing.md,
@@ -540,6 +586,7 @@ const styles = StyleSheet.create({
     ...typography.body1,
     fontWeight: '600',
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   wordItem: {
     flexDirection: 'row',
@@ -550,16 +597,20 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   wordItemNeedsWork: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: colors.warning.light + '20',
+    borderWidth: 2,
+    borderColor: colors.warning.main,
   },
   wordArabic: {
     ...typography.body1,
     fontFamily: 'Amiri',
     flex: 1,
+    color: colors.text.primary,
   },
   wordAccuracy: {
     ...typography.body2,
     fontWeight: '600',
+    color: colors.text.secondary,
   },
 });
 

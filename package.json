@@ -4,6 +4,7 @@
   "description": "Comprehensive mobile application for Muslims learning to pray with understanding and connection",
   "private": true,
   "scripts": {
+    "start": "react-native start",
     "dev": "react-native start",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -25,6 +26,10 @@
     "db:seed": "tsx database/seeds/index.ts",
     "build:android": "cd android && ./gradlew assembleRelease",
     "build:ios": "cd ios && xcodebuild -workspace SalahCompanion.xcworkspace -scheme SalahCompanion -configuration Release",
+    "bundle:ios": "node scripts/bundle-ios.js",
+    "ios:iphone17": "npx react-native run-ios --simulator=\"iPhone 17\" --udid=\"$(xcrun simctl list devices available | grep 'iPhone 17' | grep -v 'Pro' | head -1 | grep -oE '[A-F0-9-]{36}' | head -1)\"",
+    "ios:test": "npm run bundle:ios && npm run ios:iphone17",
+    "ios:launch": "./scripts/launch-ios-app.sh",
     "check:quran-api": "tsx scripts/check-quran-foundation.ts",
     "prepare": "husky install"
   },
@@ -86,6 +91,7 @@
     "@types/node": "^20.19.27",
     "@types/react": "^18.2.45",
     "@types/react-native": "^0.72.8",
+    "@types/react-native-vector-icons": "^6.4.18",
     "@types/react-test-renderer": "^18.0.7",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",

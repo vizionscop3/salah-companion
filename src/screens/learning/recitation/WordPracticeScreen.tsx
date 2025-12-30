@@ -7,16 +7,11 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ScrollView, Text} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  Card,
-  Title,
-  Paragraph,
-  Button,
-  ProgressBar,
-  ActivityIndicator,
-} from 'react-native-paper';
+import {ProgressBar, ActivityIndicator} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
+import {spacing, typography, colors} from '@constants/theme';
+import {NeubrutalCard, NeubrutalButton} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '@context/AuthContext';
 import {recordingService} from '@services/recitation/recordingService';
 import {
@@ -186,8 +181,8 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-          <Paragraph style={styles.loadingText}>Loading ayah...</Paragraph>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Loading ayah...</Text>
         </View>
       </SafeAreaView>
     );
@@ -197,10 +192,14 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Paragraph style={styles.errorText}>{loadError}</Paragraph>
-          <Button mode="contained" onPress={loadAyah} style={styles.retryButton}>
-            Retry
-          </Button>
+          <Text style={styles.errorText}>{loadError}</Text>
+          <NeubrutalButton
+            title="Retry"
+            onPress={loadAyah}
+            variant="primary"
+            size="medium"
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -219,85 +218,102 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Title style={styles.title}>Word-by-Word Practice</Title>
-          <Paragraph style={styles.subtitle}>
+          <Text style={styles.title}>Word-by-Word Practice</Text>
+          <Text style={styles.subtitle}>
             Surah {surahNumber}, Ayah {ayahNumber}
-          </Paragraph>
-          <ProgressBar progress={progress} color={currentTheme.colors.primary} style={styles.progressBar} />
-          <Paragraph style={styles.progressText}>
+          </Text>
+          <ProgressBar progress={progress} color={colors.primary.main} style={styles.progressBar} />
+          <Text style={styles.progressText}>
             Word {currentWordIndex + 1} of {words.length}
-          </Paragraph>
+          </Text>
         </View>
 
-        <Card style={[styles.wordCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <View style={styles.wordContainer}>
-              <Text style={styles.arabicWord}>{currentWord}</Text>
-              {ayahTransliteration && (
-                <Paragraph style={styles.transliteration}>
-                  {ayahTransliteration}
-                </Paragraph>
-              )}
-              <Paragraph style={styles.wordContext}>
-                From: {ayahText}
-              </Paragraph>
-            </View>
-
-            <View style={styles.actions}>
-              <Button
-                mode="outlined"
-                icon="play"
-                onPress={handlePlayReference}
-                style={styles.actionButton}>
-                Play Reference
-              </Button>
-            </View>
-          </Card.Content>
-        </Card>
-
-        <Card style={[styles.recordingCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <Title style={styles.sectionTitle}>Record Your Recitation</Title>
-            
-            {isRecording ? (
-              <View style={styles.recordingContainer}>
-                <ActivityIndicator size="large" color={currentTheme.colors.error} />
-                <Paragraph style={styles.recordingText}>Recording...</Paragraph>
-                <Button
-                  mode="contained"
-                  buttonColor={currentTheme.colors.error}
-                  onPress={handleStopRecording}
-                  style={styles.stopButton}>
-                  Stop Recording
-                </Button>
-              </View>
-            ) : (
-              <Button
-                mode="contained"
-                icon="microphone"
-                onPress={handleStartRecording}
-                disabled={isAnalyzing}
-                style={styles.recordButton}>
-                {isAnalyzing ? 'Analyzing...' : 'Start Recording'}
-              </Button>
+        <NeubrutalCard style={styles.wordCard} shadowSize="large">
+          <View style={styles.wordContainer}>
+            <Text style={styles.arabicWord}>{currentWord}</Text>
+            {ayahTransliteration && (
+              <Text style={styles.transliteration}>
+                {ayahTransliteration}
+              </Text>
             )}
+            <Text style={styles.wordContext}>
+              From: {ayahText}
+            </Text>
+          </View>
+
+          <View style={styles.actions}>
+            <NeubrutalButton
+              title="Play Reference"
+              onPress={handlePlayReference}
+              variant="outline"
+              size="medium"
+              icon={
+                <MaterialCommunityIcons
+                  name="play"
+                  size={20}
+                  color={colors.primary.main}
+                />
+              }
+              style={styles.actionButton}
+            />
+          </View>
+        </NeubrutalCard>
+
+        <NeubrutalCard style={styles.recordingCard} shadowSize="medium">
+          <Text style={styles.sectionTitle}>Record Your Recitation</Text>
+          
+          {isRecording ? (
+            <View style={styles.recordingContainer}>
+              <ActivityIndicator size="large" color={colors.error.main} />
+              <Text style={styles.recordingText}>Recording...</Text>
+              <NeubrutalButton
+                title="Stop Recording"
+                onPress={handleStopRecording}
+                variant="primary"
+                size="large"
+                icon={
+                  <MaterialCommunityIcons
+                    name="stop"
+                    size={20}
+                    color={colors.background.default}
+                  />
+                }
+                style={styles.stopButton}
+              />
+            </View>
+          ) : (
+            <NeubrutalButton
+              title={isAnalyzing ? 'Analyzing...' : 'Start Recording'}
+              onPress={handleStartRecording}
+              variant="primary"
+              size="large"
+              disabled={isAnalyzing}
+              loading={isAnalyzing}
+              icon={
+                <MaterialCommunityIcons
+                  name="microphone"
+                  size={20}
+                  color={colors.background.default}
+                />
+              }
+              style={styles.recordButton}
+            />
+          )}
 
             {isAnalyzing && (
               <View style={styles.analyzingContainer}>
-                <ActivityIndicator size="small" />
-                <Paragraph style={styles.analyzingText}>Analyzing your recitation...</Paragraph>
+                <ActivityIndicator size="small" color={colors.primary.main} />
+                <Text style={styles.analyzingText}>Analyzing your recitation...</Text>
               </View>
             )}
-          </Card.Content>
-        </Card>
+        </NeubrutalCard>
 
         {feedback && (
-          <Card style={[styles.feedbackCard, {backgroundColor: currentTheme.colors.surface}]}>
-            <Card.Content>
-              <Title style={styles.sectionTitle}>Feedback</Title>
+          <NeubrutalCard style={styles.feedbackCard} shadowSize="medium">
+            <Text style={styles.sectionTitle}>Feedback</Text>
               
               <View style={styles.accuracyContainer}>
-                <Paragraph style={styles.accuracyLabel}>Accuracy Score</Paragraph>
+                <Text style={styles.accuracyLabel}>Accuracy Score</Text>
                 <View style={[styles.accuracyCircle, {borderColor: accuracyColor}]}>
                   <Text style={[styles.accuracyScore, {color: accuracyColor}]}>
                     {Math.round(feedback.accuracy)}%
@@ -307,44 +323,45 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
 
               {feedback.needsWork && (
                 <View style={styles.needsWorkContainer}>
-                  <Paragraph style={styles.needsWorkText}>
+                  <Text style={styles.needsWorkText}>
                     ⚠️ This word needs more practice
-                  </Paragraph>
+                  </Text>
                 </View>
               )}
 
               {feedback.phonemes && feedback.phonemes.length > 0 && (
                 <View style={styles.phonemesContainer}>
-                  <Paragraph style={styles.phonemesTitle}>Phoneme Analysis:</Paragraph>
+                  <Text style={styles.phonemesTitle}>Phoneme Analysis:</Text>
                   {feedback.phonemes.map((phoneme, index) => (
                     <View key={index} style={styles.phonemeItem}>
-                      <Paragraph style={styles.phonemeText}>
+                      <Text style={styles.phonemeText}>
                         {phoneme.phoneme}: {Math.round(phoneme.accuracy)}%
                         {phoneme.issue && ` - ${phoneme.issue}`}
-                      </Paragraph>
+                      </Text>
                     </View>
                   ))}
                 </View>
               )}
-            </Card.Content>
-          </Card>
+          </NeubrutalCard>
         )}
 
         <View style={styles.navigation}>
-          <Button
-            mode="outlined"
+          <NeubrutalButton
+            title="Previous"
             onPress={handlePreviousWord}
+            variant="outline"
+            size="medium"
             disabled={currentWordIndex === 0}
-            style={styles.navButton}>
-            Previous
-          </Button>
-          <Button
-            mode="contained"
+            style={styles.navButton}
+          />
+          <NeubrutalButton
+            title="Next Word"
             onPress={handleNextWord}
+            variant="primary"
+            size="medium"
             disabled={currentWordIndex >= words.length - 1}
-            style={styles.navButton}>
-            Next Word
-          </Button>
+            style={styles.navButton}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -354,7 +371,7 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
@@ -369,6 +386,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
+    color: colors.text.primary,
   },
   errorContainer: {
     flex: 1,
@@ -379,7 +397,8 @@ const styles = StyleSheet.create({
   errorText: {
     marginBottom: spacing.md,
     textAlign: 'center',
-    color: '#F44336',
+    color: colors.error.main,
+    ...typography.body1,
   },
   retryButton: {
     marginTop: spacing.sm,
@@ -389,10 +408,14 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h3,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   subtitle: {
     ...typography.body1,
+    color: colors.text.secondary,
     opacity: 0.7,
     marginBottom: spacing.sm,
   },
@@ -404,10 +427,13 @@ const styles = StyleSheet.create({
   progressText: {
     ...typography.body2,
     textAlign: 'center',
+    color: colors.text.secondary,
   },
   wordCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   wordContainer: {
     alignItems: 'center',
@@ -418,6 +444,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Amiri',
     textAlign: 'center',
     marginBottom: spacing.sm,
+    color: colors.text.primary,
+    lineHeight: 48,
   },
   transliteration: {
     ...typography.body1,
@@ -426,13 +454,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.sm,
     fontStyle: 'italic',
-    color: '#666',
+    color: colors.text.secondary,
   },
   wordContext: {
     ...typography.body2,
     textAlign: 'center',
     opacity: 0.6,
     fontFamily: 'Amiri',
+    color: colors.text.secondary,
   },
   actions: {
     marginTop: spacing.sm,
@@ -442,11 +471,16 @@ const styles = StyleSheet.create({
   },
   recordingCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   sectionTitle: {
     ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
+    fontFamily: 'Poppins',
   },
   recordingContainer: {
     alignItems: 'center',
@@ -455,6 +489,8 @@ const styles = StyleSheet.create({
   recordingText: {
     marginTop: spacing.sm,
     marginBottom: spacing.md,
+    color: colors.text.primary,
+    ...typography.body1,
   },
   stopButton: {
     marginTop: spacing.sm,
@@ -470,10 +506,14 @@ const styles = StyleSheet.create({
   },
   analyzingText: {
     marginLeft: spacing.sm,
+    color: colors.text.secondary,
+    ...typography.body2,
   },
   feedbackCard: {
     marginBottom: spacing.md,
-    elevation: 2,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   accuracyContainer: {
     alignItems: 'center',
@@ -482,6 +522,7 @@ const styles = StyleSheet.create({
   accuracyLabel: {
     ...typography.body1,
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   accuracyCircle: {
     width: 80,
@@ -496,14 +537,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   needsWorkContainer: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: colors.warning.light + '20',
     padding: spacing.sm,
     borderRadius: 8,
     marginBottom: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.warning.main,
   },
   needsWorkText: {
     ...typography.body2,
-    color: '#E65100',
+    color: colors.warning.main,
+    fontWeight: '600',
   },
   phonemesContainer: {
     marginTop: spacing.md,
@@ -512,21 +556,23 @@ const styles = StyleSheet.create({
     ...typography.body1,
     fontWeight: '600',
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   phonemeItem: {
     marginBottom: spacing.xs,
   },
   phonemeText: {
     ...typography.body2,
+    color: colors.text.secondary,
   },
   navigation: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: spacing.md,
+    gap: spacing.sm,
   },
   navButton: {
     flex: 1,
-    marginHorizontal: spacing.xs,
   },
 });
 

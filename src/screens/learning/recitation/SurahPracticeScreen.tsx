@@ -7,16 +7,11 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ScrollView, Text} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  Card,
-  Title,
-  Paragraph,
-  Button,
-  ActivityIndicator,
-  ProgressBar,
-} from 'react-native-paper';
+import {ActivityIndicator, ProgressBar} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
 import {spacing, typography, colors} from '@constants/theme';
+import {NeubrutalCard, NeubrutalButton} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '@context/AuthContext';
 import {recordingService} from '@services/recitation/recordingService';
 import {
@@ -196,8 +191,8 @@ export const SurahPracticeScreen: React.FC<SurahPracticeScreenProps> = ({route})
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={currentTheme.colors.primary} />
-          <Paragraph style={styles.loadingText}>Loading surah...</Paragraph>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Loading surah...</Text>
         </View>
       </SafeAreaView>
     );
@@ -207,12 +202,16 @@ export const SurahPracticeScreen: React.FC<SurahPracticeScreenProps> = ({route})
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Paragraph style={styles.errorText}>
+          <Text style={styles.errorText}>
             {loadError || 'Failed to load surah'}
-          </Paragraph>
-          <Button mode="contained" onPress={loadSurah} style={styles.retryButton}>
-            Retry
-          </Button>
+          </Text>
+          <NeubrutalButton
+            title="Retry"
+            onPress={loadSurah}
+            variant="primary"
+            size="medium"
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -228,134 +227,150 @@ export const SurahPracticeScreen: React.FC<SurahPracticeScreenProps> = ({route})
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Title style={styles.title}>{surah.englishName}</Title>
-          <Paragraph style={styles.subtitle}>
+          <Text style={styles.title}>{surah.englishName}</Text>
+          <Text style={styles.subtitle}>
             {surah.name} • {surah.numberOfAyahs} Ayahs
-          </Paragraph>
+          </Text>
           {isRecording && (
             <View style={styles.recordingIndicator}>
               <View style={styles.recordingDot} />
-              <Paragraph style={styles.recordingText}>
+              <Text style={styles.recordingText}>
                 Recording: {formatDuration(recordingDuration)}
-              </Paragraph>
+              </Text>
             </View>
           )}
           {!isRecording && surah.ayahs.length > 0 && (
-            <ProgressBar progress={progress} color={currentTheme.colors.primary} style={styles.progressBar} />
+            <ProgressBar progress={progress} color={colors.primary.main} style={styles.progressBar} />
           )}
         </View>
 
-        <Card style={[styles.surahCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <View style={styles.actions}>
-              <Button
-                mode="outlined"
-                icon="play"
-                onPress={handlePlayReference}
-                style={styles.actionButton}
-                disabled={isRecording}>
-                Play Reference
-              </Button>
+        <NeubrutalCard style={styles.surahCard} shadowSize="medium">
+          <View style={styles.actions}>
+            <NeubrutalButton
+              title="Play Reference"
+              onPress={handlePlayReference}
+              variant="outline"
+              size="medium"
+              disabled={isRecording}
+              icon={
+                <MaterialCommunityIcons
+                  name="play"
+                  size={20}
+                  color={colors.primary.main}
+                />
+              }
+              style={styles.actionButton}
+            />
+          </View>
+
+          {!isRecording && !feedback && (
+            <NeubrutalButton
+              title="Start Recording"
+              onPress={handleStartRecording}
+              variant="primary"
+              size="large"
+              icon={
+                <MaterialCommunityIcons
+                  name="microphone"
+                  size={20}
+                  color={colors.background.default}
+                />
+              }
+              style={styles.recordButton}
+            />
+          )}
+
+          {isRecording && (
+            <NeubrutalButton
+              title="Stop Recording"
+              onPress={handleStopRecording}
+              variant="primary"
+              size="large"
+              icon={
+                <MaterialCommunityIcons
+                  name="stop"
+                  size={20}
+                  color={colors.background.default}
+                />
+              }
+              style={[styles.recordButton, styles.stopButton]}
+            />
+          )}
+
+          {isAnalyzing && (
+            <View style={styles.analyzingContainer}>
+              <ActivityIndicator size="large" color={colors.primary.main} />
+              <Text style={styles.analyzingText}>Analyzing your recitation...</Text>
             </View>
-
-            {!isRecording && !feedback && (
-              <Button
-                mode="contained"
-                icon="microphone"
-                onPress={handleStartRecording}
-                style={styles.recordButton}>
-                Start Recording
-              </Button>
-            )}
-
-            {isRecording && (
-              <Button
-                mode="contained"
-                icon="stop"
-                onPress={handleStopRecording}
-                style={[styles.recordButton, styles.stopButton]}>
-                Stop Recording
-              </Button>
-            )}
-
-            {isAnalyzing && (
-              <View style={styles.analyzingContainer}>
-                <ActivityIndicator size="large" color={currentTheme.colors.primary} />
-                <Paragraph style={styles.analyzingText}>Analyzing your recitation...</Paragraph>
-              </View>
-            )}
-          </Card.Content>
-        </Card>
+          )}
+        </NeubrutalCard>
 
         {/* Display all ayahs */}
-        <Card style={[styles.ayahsCard, {backgroundColor: currentTheme.colors.surface}]}>
-          <Card.Content>
-            <Title style={styles.ayahsTitle}>Surah Text</Title>
-            {surah.ayahs.map((ayah, index) => {
-              const transliteration = ayahTransliterations.get(ayah.numberInSurah);
-              return (
-                <View
-                  key={ayah.number}
-                  style={[
-                    styles.ayahContainer,
-                    index === currentAyahIndex && isRecording && styles.currentAyah,
-                  ]}>
-                  <Text style={styles.ayahNumber}>{ayah.numberInSurah}</Text>
-                  <Text style={styles.ayahText}>{ayah.text}</Text>
-                  {transliteration && (
-                    <Paragraph style={styles.transliteration}>{transliteration}</Paragraph>
-                  )}
-                </View>
-              );
-            })}
-          </Card.Content>
-        </Card>
+        <NeubrutalCard style={styles.ayahsCard} shadowSize="large">
+          <Text style={styles.ayahsTitle}>Surah Text</Text>
+          {surah.ayahs.map((ayah, index) => {
+            const transliteration = ayahTransliterations.get(ayah.numberInSurah);
+            return (
+              <View
+                key={ayah.number}
+                style={[
+                  styles.ayahContainer,
+                  index === currentAyahIndex && isRecording && styles.currentAyah,
+                ]}>
+                <Text style={styles.ayahNumber}>{ayah.numberInSurah}</Text>
+                <Text style={styles.ayahText}>{ayah.text}</Text>
+                {transliteration && (
+                  <Text style={styles.transliteration}>{transliteration}</Text>
+                )}
+              </View>
+            );
+          })}
+        </NeubrutalCard>
 
         {/* Feedback Display */}
         {feedback && (
-          <Card style={[styles.feedbackCard, {backgroundColor: currentTheme.colors.surface}]}>
-            <Card.Content>
-              <Title style={styles.feedbackTitle}>Practice Results</Title>
-              
-              <View style={styles.scoreContainer}>
+          <NeubrutalCard style={styles.feedbackCard} shadowSize="medium">
+            <Text style={styles.feedbackTitle}>Practice Results</Text>
+            
+            <View style={styles.scoreContainer}>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreLabel}>Overall Accuracy</Text>
+                <Text style={[styles.scoreValue, {color: getAccuracyColor(feedback.overallAccuracy)}]}>
+                  {feedback.overallAccuracy.toFixed(1)}%
+                </Text>
+              </View>
+              {feedback.tajweedScore !== undefined && (
                 <View style={styles.scoreItem}>
-                  <Paragraph style={styles.scoreLabel}>Overall Accuracy</Paragraph>
-                  <Text style={[styles.scoreValue, {color: getAccuracyColor(feedback.overallAccuracy)}]}>
-                    {feedback.overallAccuracy.toFixed(1)}%
+                  <Text style={styles.scoreLabel}>Tajweed Score</Text>
+                  <Text style={[styles.scoreValue, {color: getAccuracyColor(feedback.tajweedScore)}]}>
+                    {feedback.tajweedScore.toFixed(1)}%
                   </Text>
                 </View>
-                {feedback.tajweedScore !== undefined && (
-                  <View style={styles.scoreItem}>
-                    <Paragraph style={styles.scoreLabel}>Tajweed Score</Paragraph>
-                    <Text style={[styles.scoreValue, {color: getAccuracyColor(feedback.tajweedScore)}]}>
-                      {feedback.tajweedScore.toFixed(1)}%
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {feedback.improvementAreas.length > 0 && (
-                <View style={styles.improvementSection}>
-                  <Paragraph style={styles.improvementTitle}>Areas for Improvement:</Paragraph>
-                  {feedback.improvementAreas.map((area, index) => (
-                    <Paragraph key={index} style={styles.improvementItem}>
-                      • {area}
-                    </Paragraph>
-                  ))}
-                </View>
               )}
+            </View>
 
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  setFeedback(null);
-                  setCurrentAyahIndex(0);
-                }}
-                style={styles.retryButton}>
-                Practice Again
-              </Button>
-            </Card.Content>
-          </Card>
+            {feedback.improvementAreas.length > 0 && (
+              <View style={styles.improvementSection}>
+                <Text style={styles.improvementTitle}>Areas for Improvement:</Text>
+                {feedback.improvementAreas.map((area, index) => (
+                  <Text key={index} style={styles.improvementItem}>
+                    • {area}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            <NeubrutalButton
+              title="Practice Again"
+              onPress={() => {
+                setFeedback(null);
+                setCurrentAyahIndex(0);
+              }}
+              variant="outline"
+              size="medium"
+              style={styles.retryButton}
+            />
+          </NeubrutalCard>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -386,6 +401,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
+    color: colors.text.primary,
+    ...typography.body1,
   },
   errorContainer: {
     flex: 1,
@@ -395,6 +412,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginBottom: spacing.md,
+    color: colors.error.main,
+    ...typography.body1,
+    textAlign: 'center',
   },
   header: {
     marginBottom: spacing.lg,
@@ -402,10 +422,13 @@ const styles = StyleSheet.create({
   title: {
     ...typography.h4,
     fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   subtitle: {
     ...typography.body1,
+    color: colors.text.secondary,
     opacity: 0.7,
     marginBottom: spacing.sm,
   },
@@ -427,6 +450,7 @@ const styles = StyleSheet.create({
   recordingText: {
     color: colors.error.main,
     fontWeight: '600',
+    ...typography.body1,
   },
   progressBar: {
     marginTop: spacing.sm,
@@ -435,7 +459,9 @@ const styles = StyleSheet.create({
   },
   surahCard: {
     marginBottom: spacing.lg,
-    borderRadius: 12,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   actions: {
     flexDirection: 'row',
@@ -457,14 +483,21 @@ const styles = StyleSheet.create({
   },
   analyzingText: {
     marginTop: spacing.md,
+    color: colors.text.secondary,
+    ...typography.body2,
   },
   ayahsCard: {
     marginBottom: spacing.lg,
-    borderRadius: 12,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   ayahsTitle: {
     ...typography.h6,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
+    fontFamily: 'Poppins',
   },
   ayahContainer: {
     flexDirection: 'row',
@@ -476,12 +509,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.light + '20',
     borderLeftWidth: 3,
     borderLeftColor: colors.primary.main,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    borderRadius: 8,
   },
   ayahNumber: {
     ...typography.body2,
     fontWeight: '600',
     marginRight: spacing.sm,
     minWidth: 30,
+    color: colors.text.secondary,
   },
   ayahText: {
     ...typography.body1,
@@ -489,6 +526,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Amiri',
     flex: 1,
     textAlign: 'right',
+    color: colors.text.primary,
   },
   transliteration: {
     ...typography.body2,
@@ -496,24 +534,31 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: spacing.xs,
     fontStyle: 'italic',
-    color: '#666',
+    color: colors.text.secondary,
     flex: 1,
   },
   feedbackCard: {
     marginBottom: spacing.lg,
-    borderRadius: 12,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   feedbackTitle: {
     ...typography.h6,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
+    fontFamily: 'Poppins',
   },
   scoreContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: spacing.lg,
     padding: spacing.md,
-    backgroundColor: colors.background.paper,
+    backgroundColor: colors.surface.tertiary,
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
   },
   scoreItem: {
     alignItems: 'center',
@@ -522,6 +567,7 @@ const styles = StyleSheet.create({
     ...typography.body2,
     opacity: 0.7,
     marginBottom: spacing.xs,
+    color: colors.text.secondary,
   },
   scoreValue: {
     ...typography.h4,
@@ -534,11 +580,13 @@ const styles = StyleSheet.create({
     ...typography.body1,
     fontWeight: '600',
     marginBottom: spacing.sm,
+    color: colors.text.primary,
   },
   improvementItem: {
     ...typography.body2,
     marginBottom: spacing.xs,
     opacity: 0.8,
+    color: colors.text.secondary,
   },
   retryButton: {
     marginTop: spacing.md,

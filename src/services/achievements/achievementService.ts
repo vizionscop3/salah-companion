@@ -240,13 +240,15 @@ async function updateUserExperiencePoints(
 export async function getUserAchievementsWithProgress(
   userId: string,
 ): Promise<AchievementProgress[]> {
-  const [progress, recitationSummary, pronunciationSummary, prayerRecords, unlockedAchievements] =
+  const [progress, recitationSummary, pronunciationSummary, prayerRecords] =
     await Promise.all([
       getTodayProgress(userId).catch(() => null),
       getRecitationSummary(userId).catch(() => null),
       getPronunciationSummary(userId).catch(() => null),
       getPrayerRecords(userId).catch(() => []),
     ]);
+  
+  const unlockedAchievements = await getUnlockedAchievements(userId);
 
   // Get unlocked achievements from AsyncStorage
   const achievementsKey = `@salah_companion:achievements:${userId}`;
@@ -378,12 +380,11 @@ export async function getUnlockedAchievements(
       : [];
 
     // Map keys to achievement definitions
-    return unlockedAchievementKeys
-      .map(key => {
-        const definition = ACHIEVEMENT_DEFINITIONS.find(d => d.achievementKey === key);
-        if (!definition) return null;
-
-        return {
+    const achievements: UnlockedAchievement[] = [];
+    for (const key of unlockedAchievementKeys) {
+      const definition = ACHIEVEMENT_DEFINITIONS.find(d => d.achievementKey === key);
+      if (definition) {
+        achievements.push({
           achievementKey: definition.achievementKey,
           title: definition.title,
           description: definition.description,
@@ -391,9 +392,10 @@ export async function getUnlockedAchievements(
           iconName: definition.iconName || 'trophy',
           pointsAwarded: definition.pointsAwarded,
           unlockedAt: new Date(), // We don't store exact unlock time in AsyncStorage
-        };
-      })
-      .filter((a): a is UnlockedAchievement => a !== null);
+        });
+      }
+    }
+    return achievements;
   } catch (error) {
     console.error('Error getting unlocked achievements:', error);
     return [];

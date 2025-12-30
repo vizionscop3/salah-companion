@@ -7,16 +7,11 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  Card,
-  Title,
-  Paragraph,
-  Button,
-  ProgressBar,
-  Chip,
-} from 'react-native-paper';
+import {ProgressBar} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
+import {spacing, typography, colors} from '@constants/theme';
+import {NeubrutalCard, NeubrutalButton} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   getPrayerGuide,
   getCurrentStep,
@@ -92,6 +87,7 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
       const useApi = isQuranicRecitation(currentStep.id);
 
       // Play audio (will use API if available, fallback to local)
+      // Errors are handled silently by audioService
       await audioService.playAudio(
         currentStep.id,
         80,
@@ -102,7 +98,11 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
         useApi, // Enable API for Quranic recitations
       );
     } catch (error) {
-      console.error('Error playing audio:', error);
+      // Silent failure - audio is optional, don't disrupt user experience
+      // Only log in dev mode
+      if (__DEV__) {
+        console.warn('Audio playback failed (silent fallback):', error);
+      }
       setIsPlaying(false);
       setIsLoading(false);
     }
@@ -132,95 +132,94 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
         style={styles.scrollView}
         contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
+          <Text style={styles.title}>
             Guided {prayer.charAt(0).toUpperCase() + prayer.slice(1)} Prayer
           </Text>
-          <Text style={[styles.subtitle, {color: currentTheme.colors.text}]}>
+          <Text style={styles.subtitle}>
             Step {currentStepIndex + 1} of {guide.steps.length}
           </Text>
         </View>
 
-        <ProgressBar progress={progress} color={currentTheme.colors.primary} />
+        <ProgressBar progress={progress} color={colors.primary.main} style={styles.progressBar} />
 
-        <Card style={styles.stepCard}>
-          <Card.Content>
-            <View style={styles.stepHeader}>
-              <Chip
-                icon={currentStep.position === 'standing' ? 'human-handsup' : undefined}
-                style={styles.positionChip}>
-                {currentStep.position || 'N/A'}
-              </Chip>
-              <Text style={[styles.stepNumber, {color: currentTheme.colors.primary}]}>
-                Step {currentStep.order}
-              </Text>
+        <NeubrutalCard style={styles.stepCard} shadowSize="large">
+          <View style={styles.stepHeader}>
+            <View style={styles.positionTag}>
+              <MaterialCommunityIcons
+                name={currentStep.position === 'standing' ? 'human-handsup' : currentStep.position === 'sujud' ? 'human' : 'human-handsup'}
+                size={16}
+                color={colors.primary.main}
+              />
+              <Text style={styles.positionText}>{currentStep.position || 'N/A'}</Text>
             </View>
+            <Text style={styles.stepNumber}>
+              Step {currentStep.order}
+            </Text>
+          </View>
 
-            <Title style={styles.stepTitle}>{currentStep.instruction}</Title>
+          <Text style={styles.stepTitle}>{currentStep.instruction}</Text>
 
-            {currentStep.arabic && (
-              <View style={styles.arabicContainer}>
-                <Text style={[styles.arabicText, {color: currentTheme.colors.text}]}>
-                  {currentStep.arabic}
+          {currentStep.arabic && (
+            <View style={styles.arabicContainer}>
+              <Text style={styles.arabicText}>
+                {currentStep.arabic}
+              </Text>
+              {currentStep.transliteration && (
+                <Text style={styles.transliteration}>
+                  {currentStep.transliteration}
                 </Text>
-                {currentStep.transliteration && (
-                  <Text
-                    style={[
-                      styles.transliteration,
-                      {color: currentTheme.colors.text},
-                    ]}>
-                    {currentStep.transliteration}
-                  </Text>
-                )}
-                {currentStep.translation && (
-                  <Text
-                    style={[styles.translation, {color: currentTheme.colors.text}]}>
-                    {currentStep.translation}
-                  </Text>
-                )}
-              </View>
-            )}
+              )}
+              {currentStep.translation && (
+                <Text style={styles.translation}>
+                  {currentStep.translation}
+                </Text>
+              )}
+            </View>
+          )}
 
-            {(currentStep.audioUrl || currentStep.arabic) && (
-              <Button
-                mode="contained"
-                onPress={isPlaying ? handleStopAudio : handlePlayAudio}
-                icon={isPlaying ? 'stop' : 'play'}
-                style={styles.audioButton}
-                loading={isLoading}
-                disabled={isLoading}>
-                {isLoading
-                  ? 'Loading...'
-                  : isPlaying
-                  ? 'Stop Audio'
-                  : 'Play Audio'}
-              </Button>
-            )}
-          </Card.Content>
-        </Card>
+          {(currentStep.audioUrl || currentStep.arabic) && (
+            <NeubrutalButton
+              title={isLoading ? 'Loading...' : isPlaying ? 'Stop Audio' : 'Play Audio'}
+              onPress={isPlaying ? handleStopAudio : handlePlayAudio}
+              variant="primary"
+              size="large"
+              loading={isLoading}
+              disabled={isLoading}
+              icon={
+                <MaterialCommunityIcons
+                  name={isPlaying ? 'stop' : 'play'}
+                  size={20}
+                  color={colors.background.default}
+                />
+              }
+              style={styles.audioButton}
+            />
+          )}
+        </NeubrutalCard>
 
         {nextStep && (
-          <Card style={styles.nextStepCard}>
-            <Card.Content>
-              <Title>Next: {nextStep.instruction}</Title>
-            </Card.Content>
-          </Card>
+          <NeubrutalCard style={styles.nextStepCard} shadowSize="small">
+            <Text style={styles.nextStepText}>Next: {nextStep.instruction}</Text>
+          </NeubrutalCard>
         )}
 
         <View style={styles.navigationButtons}>
-          <Button
-            mode="outlined"
+          <NeubrutalButton
+            title="Previous"
             onPress={handlePrevious}
+            variant="outline"
+            size="medium"
             disabled={currentStepIndex === 0}
-            style={styles.navButton}>
-            Previous
-          </Button>
-          <Button
-            mode="contained"
+            style={styles.navButton}
+          />
+          <NeubrutalButton
+            title={isLastStep(guide, currentStepIndex) ? 'Complete' : 'Next'}
             onPress={handleNext}
+            variant="primary"
+            size="medium"
             disabled={isLastStep(guide, currentStepIndex)}
-            style={styles.navButton}>
-            {isLastStep(guide, currentStepIndex) ? 'Complete' : 'Next'}
-          </Button>
+            style={styles.navButton}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -230,7 +229,7 @@ export const GuidedSalahScreen: React.FC<GuidedSalahScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
@@ -245,22 +244,35 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body1,
+    color: colors.text.primary,
   },
   header: {
     marginBottom: spacing.md,
   },
   title: {
     ...typography.h3,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   subtitle: {
     ...typography.body2,
+    color: colors.text.secondary,
     opacity: 0.7,
+  },
+  progressBar: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    height: 8,
+    borderRadius: 4,
   },
   stepCard: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
-    elevation: 4,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -268,15 +280,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  positionChip: {
-    marginRight: spacing.sm,
+  positionTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface.tertiary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    gap: spacing.xs,
+  },
+  positionText: {
+    ...typography.body2,
+    fontWeight: '600',
+    color: colors.text.primary,
+    textTransform: 'capitalize',
   },
   stepNumber: {
     ...typography.body2,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
   },
   stepTitle: {
+    ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
+    fontFamily: 'Poppins',
   },
   arabicContainer: {
     marginTop: spacing.md,
@@ -284,21 +316,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   arabicText: {
-    ...typography.h4,
+    ...typography.h3,
     textAlign: 'center',
     marginBottom: spacing.sm,
-    fontFamily: 'Amiri', // Arabic font
+    fontFamily: 'Amiri',
+    color: colors.text.primary,
+    lineHeight: 48,
   },
   transliteration: {
     ...typography.body1,
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: spacing.xs,
+    color: colors.text.secondary,
   },
   translation: {
     ...typography.body2,
     textAlign: 'center',
-    opacity: 0.7,
+    opacity: 0.8,
+    color: colors.text.secondary,
   },
   audioButton: {
     marginTop: spacing.md,
@@ -306,16 +342,23 @@ const styles = StyleSheet.create({
   nextStepCard: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: '#F5F5F5',
+    padding: spacing.md,
+    backgroundColor: colors.surface.tertiary,
+    borderColor: colors.border.secondary,
+  },
+  nextStepText: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    opacity: 0.7,
   },
   navigationButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: spacing.lg,
+    gap: spacing.sm,
   },
   navButton: {
     flex: 1,
-    marginHorizontal: spacing.xs,
   },
 });
 

@@ -302,15 +302,21 @@ export async function playPhrase(
     const filePath = await getPhraseAudioPath(phrase);
     await playPhraseAudio(filePath, volume);
   } catch (error) {
-    console.warn(`Audio file not available for ${phrase}, trying TTS:`, error);
+    // Silent fallback - log only in dev mode
+    if (__DEV__) {
+      console.warn(`Audio file not available for ${phrase}, trying TTS:`, error);
+    }
     
     // Fallback to TTS
     try {
       await playPhraseWithTTS(phrase, volume);
     } catch (ttsError) {
-      console.error(`Error playing phrase ${phrase} with TTS:`, ttsError);
-      // Final fallback: silent failure (could show user message in production)
-      throw new Error(`Unable to play phrase ${phrase}: Audio file and TTS both failed`);
+      // Silent failure - audio is optional, don't disrupt user experience
+      if (__DEV__) {
+        console.warn(`Error playing phrase ${phrase} with TTS:`, ttsError);
+      }
+      // Return silently without throwing - audio is optional
+      return;
     }
   }
 }

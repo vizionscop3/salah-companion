@@ -54,24 +54,68 @@ jest.mock('react-native-fs', () => {
 });
 
 // Mock Prisma Client
-jest.mock('@services/database/prismaClient', () => ({
-  prisma: {
-    prayerRecord: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-    },
-    userProgress: {
-      findFirst: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-      findMany: jest.fn(),
-    },
-    userAchievement: {
-      count: jest.fn(),
-    },
+const createMockPrismaClient = () => ({
+  prayerRecord: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
-}));
+  userProgress: {
+    findFirst: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+  },
+  userAchievement: {
+    count: jest.fn(),
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
+  },
+  recitationPractice: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  pronunciationProgress: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  achievement: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+  },
+  user: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+});
+
+jest.mock('@services/database/prismaClient', () => {
+  const mockPrisma = createMockPrismaClient();
+  return {
+    prisma: mockPrisma,
+    prismaClient: mockPrisma,
+    default: mockPrisma,
+  };
+});
 
 // Mock react-native-push-notification
 jest.mock('react-native-push-notification', () => ({

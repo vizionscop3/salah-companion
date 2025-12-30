@@ -19,7 +19,7 @@ import {
   PronunciationStatsCard,
   AchievementGrid,
   AchievementUnlockModal,
-} from '@components';
+} from '@components/index';
 import {spacing, typography, colors, elevation} from '@constants/theme';
 import {useNavigation} from '@react-navigation/native';
 import {useEffect, useState} from 'react';
@@ -206,8 +206,7 @@ export const ProfileScreen: React.FC = () => {
               description="Update your profile information"
               left={props => <List.Icon {...props} icon="account-edit" />}
               onPress={() => {
-                // TODO: Navigate to edit profile screen
-                Alert.alert('Coming Soon', 'Profile editing will be available soon.');
+                (navigation as any).navigate('EditProfile');
               }}
             />
           </Card.Content>

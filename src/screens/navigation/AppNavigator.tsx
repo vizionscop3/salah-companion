@@ -23,35 +23,67 @@ import {RecitationPracticeScreen} from '@screens/learning/recitation/RecitationP
 import {WordPracticeScreen} from '@screens/learning/recitation/WordPracticeScreen';
 import {AyahPracticeScreen} from '@screens/learning/recitation/AyahPracticeScreen';
 import {SurahPracticeScreen} from '@screens/learning/recitation/SurahPracticeScreen';
+import {SurahLibraryScreen} from '@screens/learning/SurahLibraryScreen';
+import {AzanEducationScreen} from '@screens/learning/AzanEducationScreen';
+import {HolidayEducationScreen} from '@screens/learning/HolidayEducationScreen';
+import {EditProfileScreen} from '@screens/profile/EditProfileScreen';
 import {useAuth} from '@context/AuthContext';
-import {ActivityIndicator, View} from 'react-native';
+import {ActivityIndicator, View, StyleSheet} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {colors, spacing, borderRadius, brutalistShadows} from '@constants/theme';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 /**
- * Main Tab Navigator
+ * Main Tab Navigator - Material Neubrutomorphism
  */
 const MainTabs: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1976D2',
-        tabBarInactiveTintColor: '#757575',
+        tabBarActiveTintColor: colors.primary.main,
+        tabBarInactiveTintColor: colors.text.secondary,
+        tabBarStyle: {
+          backgroundColor: colors.surface.secondary,
+          borderTopWidth: 3,
+          borderTopColor: colors.primary.main,
+          borderRadius: borderRadius.lg,
+          borderTopLeftRadius: borderRadius.lg,
+          borderTopRightRadius: borderRadius.lg,
+          height: 70,
+          paddingBottom: spacing.sm,
+          paddingTop: spacing.sm,
+          ...brutalistShadows.medium,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          fontFamily: 'Poppins',
+        },
+        tabBarIconStyle: {
+          marginTop: spacing.xs,
+        },
       }}>
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="home" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="PrayerTimes"
         component={PrayerTimesScreen}
         options={{
-          tabBarLabel: 'Prayer Times',
+          tabBarLabel: 'Prayer Time',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="clock-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -59,6 +91,9 @@ const MainTabs: React.FC = () => {
         component={LearningScreen}
         options={{
           tabBarLabel: 'Learning',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="book-open-variant" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -66,6 +101,9 @@ const MainTabs: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="account" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -191,6 +229,38 @@ export const AppNavigator: React.FC = () => {
                 options={{
                   headerShown: true,
                   title: 'Surah Practice',
+                }}
+              />
+              <Stack.Screen
+                name="SurahLibrary"
+                component={SurahLibraryScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Surah Library',
+                }}
+              />
+              <Stack.Screen
+                name="AzanEducation"
+                component={AzanEducationScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Azan Education',
+                }}
+              />
+              <Stack.Screen
+                name="HolidayEducation"
+                component={HolidayEducationScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Holiday Education',
+                }}
+              />
+              <Stack.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Edit Profile',
                 }}
               />
             </>

@@ -10,6 +10,7 @@ import {
   registerUser,
   logoutUser,
   getCurrentUser,
+  updateUserProfile,
   // TODO: Re-enable Google Sign-In after configuration
   // signInWithGoogle,
   // signOutFromGoogle,
@@ -27,6 +28,7 @@ interface AuthContextType {
   // loginWithGoogle: () => Promise<AuthResult>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,6 +110,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     await loadUser();
   };
 
+  const handleUpdateUser = async (userData: Partial<User>) => {
+    // Update user profile via auth service
+    if (user) {
+      try {
+        const updateData: {
+          displayName?: string;
+          preferredLanguage?: string;
+          timezone?: string;
+          onboardingCompleted?: boolean;
+        } = {};
+        
+        if (userData.displayName !== undefined) {
+          updateData.displayName = userData.displayName || undefined;
+        }
+        if (userData.email !== undefined) {
+          // Email updates would need separate API endpoint
+          // For now, just update displayName
+        }
+        
+        const updatedUser = await updateUserProfile(user.id, updateData);
+        if (updatedUser) {
+          setUser(updatedUser);
+        } else {
+          // Fallback: update local state
+          const updatedUserLocal = {...user, ...userData};
+          setUser(updatedUserLocal);
+        }
+      } catch (error) {
+        console.error('Error updating user profile:', error);
+        // Still update local state for immediate UI feedback
+        const updatedUser = {...user, ...userData};
+        setUser(updatedUser);
+      }
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -118,6 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     // loginWithGoogle: handleLoginWithGoogle,
     logout: handleLogout,
     refreshUser,
+    updateUser: handleUpdateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

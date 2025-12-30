@@ -29,6 +29,14 @@ const config = {
           type: 'sourceFile',
         };
       }
+      // Ensure MaterialCommunityIcons resolves correctly for react-native-paper
+      if (moduleName === 'react-native-vector-icons/MaterialCommunityIcons' || 
+          moduleName === '@expo/vector-icons/MaterialCommunityIcons') {
+        return {
+          filePath: require.resolve('react-native-vector-icons/MaterialCommunityIcons'),
+          type: 'sourceFile',
+        };
+      }
       // Use default resolution
       return context.resolveRequest(context, moduleName, platform);
     },

@@ -56,7 +56,10 @@ class AudioService {
           return;
         }
       } catch (error) {
-        console.warn('API audio failed, falling back to local file:', error);
+        // Silent fallback - log for debugging but don't show user error
+        if (__DEV__) {
+          console.warn('API audio failed, falling back to local file:', error);
+        }
         // Fall through to local file playback
       }
     }
@@ -82,13 +85,29 @@ class AudioService {
         }
         return;
       } catch (error) {
-        console.warn('Phrase audio service failed, falling back to local file:', error);
+        // Silent fallback - log for debugging but don't show user error
+        if (__DEV__) {
+          console.warn('Phrase audio service failed, falling back to local file:', error);
+        }
         // Fall through to local file playback
       }
     }
 
     // Fallback to local file playback
-    return this.playAudioFromFile(fileName, volume, onComplete);
+    try {
+      return await this.playAudioFromFile(fileName, volume, onComplete);
+    } catch (error) {
+      // Silent failure - audio is optional, don't disrupt user experience
+      if (__DEV__) {
+        console.warn('Local audio file playback failed:', error);
+      }
+      // Still call onComplete to prevent UI from getting stuck
+      if (onComplete) {
+        onComplete();
+      }
+      // Return silently without throwing
+      return;
+    }
   }
 
   /**
@@ -107,7 +126,10 @@ class AudioService {
       // For guided salah, audio files should be in the same location as Azan files
       const sound = new Sound(fileName, Sound.MAIN_BUNDLE, (error) => {
         if (error) {
-          console.error('Error loading audio:', error);
+          // Silent failure - log only in dev mode
+          if (__DEV__) {
+            console.warn('Error loading audio file:', fileName, error);
+          }
           reject(error);
           return;
         }
@@ -118,13 +140,18 @@ class AudioService {
         // Play audio
         sound.play((success) => {
           if (success) {
-            console.log('Audio played successfully');
+            if (__DEV__) {
+              console.log('Audio played successfully:', fileName);
+            }
             if (onComplete) {
               onComplete();
             }
             resolve();
           } else {
-            console.error('Error playing audio');
+            // Silent failure - log only in dev mode
+            if (__DEV__) {
+              console.warn('Error playing audio file:', fileName);
+            }
             reject(new Error('Failed to play audio'));
           }
           sound.release();
@@ -148,7 +175,10 @@ class AudioService {
 
       const sound = new Sound(filePath, '', (error) => {
         if (error) {
-          console.error('Error loading audio from path:', error);
+          // Silent failure - log only in dev mode
+          if (__DEV__) {
+            console.warn('Error loading audio from path:', filePath, error);
+          }
           reject(error);
           return;
         }
@@ -161,6 +191,10 @@ class AudioService {
             }
             resolve();
           } else {
+            // Silent failure - log only in dev mode
+            if (__DEV__) {
+              console.warn('Error playing audio from path:', filePath);
+            }
             reject(new Error('Failed to play audio'));
           }
           sound.release();

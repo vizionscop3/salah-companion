@@ -4,7 +4,7 @@
  * Manages Arabic letter pronunciation data, progress, and practice.
  */
 
-import {prisma} from '@services/database/prismaClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
 
 /**
@@ -329,11 +329,11 @@ export function getLetterById(id: string): ArabicLetter | undefined {
  */
 export async function getUserPronunciationProgress(userId: string) {
   try {
-    const progressRecords = await prisma.pronunciationProgress.findMany({
-      where: {userId},
-    });
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
 
-    const lettersLearned = progressRecords.filter(p => p.isLearned).length;
+    const lettersLearned = progressRecords.filter((p: any) => p.isLearned).length;
     const categoryProgress: Record<LetterCategory, number> = {
       familiar: 0,
       modified: 0,
@@ -342,7 +342,7 @@ export async function getUserPronunciationProgress(userId: string) {
     };
 
     // Count learned letters by category
-    progressRecords.forEach(record => {
+    progressRecords.forEach((record: any) => {
       if (record.isLearned) {
         const letter = getLetterById(record.letterId);
         if (letter) {
@@ -380,25 +380,33 @@ export async function markLetterLearned(
   letterId: string,
 ): Promise<void> {
   try {
-    await prisma.pronunciationProgress.upsert({
-      where: {
-        userId_letterId: {
-          userId,
-          letterId,
-        },
-      },
-      update: {
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
+
+    const existingIndex = progressRecords.findIndex((r: any) => r.letterId === letterId);
+    const now = new Date().toISOString();
+
+    if (existingIndex >= 0) {
+      progressRecords[existingIndex] = {
+        ...progressRecords[existingIndex],
         isLearned: true,
-        masteredAt: new Date(),
-        updatedAt: new Date(),
-      },
-      create: {
+        masteredAt: now,
+        updatedAt: now,
+      };
+    } else {
+      progressRecords.push({
         userId,
         letterId,
         isLearned: true,
-        masteredAt: new Date(),
-      },
-    });
+        masteredAt: now,
+        timesPracticed: 0,
+        lastPracticedAt: null,
+        accuracyScore: null,
+      });
+    }
+
+    await AsyncStorage.setItem(progressKey, JSON.stringify(progressRecords));
   } catch (error) {
     console.error('Error marking letter as learned:', error);
     throw error;
@@ -414,50 +422,46 @@ export async function recordLetterPractice(
   accuracyScore?: number,
 ): Promise<void> {
   try {
-    const existing = await prisma.pronunciationProgress.findUnique({
-      where: {
-        userId_letterId: {
-          userId,
-          letterId,
-        },
-      },
-    });
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
 
-    if (existing) {
-      await prisma.pronunciationProgress.update({
-        where: {
-          userId_letterId: {
-            userId,
-            letterId,
-          },
-        },
-        data: {
-          timesPracticed: existing.timesPracticed + 1,
-          lastPracticedAt: new Date(),
-          ...(accuracyScore !== undefined && {accuracyScore}),
-          // Auto-mark as learned if accuracy is high and practiced multiple times
-          ...(accuracyScore !== undefined && accuracyScore >= 80 && existing.timesPracticed >= 4 && !existing.isLearned
-            ? {
-                isLearned: true,
-                masteredAt: new Date(),
-              }
-            : {}),
-        },
-      });
+    const existingIndex = progressRecords.findIndex((r: any) => r.letterId === letterId);
+    const now = new Date().toISOString();
+
+    if (existingIndex >= 0) {
+      const existing = progressRecords[existingIndex];
+      const newTimesPracticed = (existing.timesPracticed || 0) + 1;
+      const shouldMarkLearned = accuracyScore !== undefined && 
+                                accuracyScore >= 80 && 
+                                newTimesPracticed >= 4 && 
+                                !existing.isLearned;
+
+      progressRecords[existingIndex] = {
+        ...existing,
+        timesPracticed: newTimesPracticed,
+        lastPracticedAt: now,
+        ...(accuracyScore !== undefined && {accuracyScore}),
+        ...(shouldMarkLearned ? {
+          isLearned: true,
+          masteredAt: now,
+        } : {}),
+      };
 
       // Check for new achievements (non-blocking)
       checkAchievementsAsync(userId);
     } else {
-      await prisma.pronunciationProgress.create({
-        data: {
-          userId,
-          letterId,
-          timesPracticed: 1,
-          lastPracticedAt: new Date(),
-          ...(accuracyScore !== undefined && {accuracyScore}),
-        },
+      progressRecords.push({
+        userId,
+        letterId,
+        timesPracticed: 1,
+        lastPracticedAt: now,
+        isLearned: false,
+        ...(accuracyScore !== undefined && {accuracyScore}),
       });
     }
+
+    await AsyncStorage.setItem(progressKey, JSON.stringify(progressRecords));
   } catch (error) {
     console.error('Error recording letter practice:', error);
     throw error;
@@ -477,14 +481,11 @@ export async function getLetterProgress(
   lastPracticedAt: Date | null;
 } | null> {
   try {
-    const progress = await prisma.pronunciationProgress.findUnique({
-      where: {
-        userId_letterId: {
-          userId,
-          letterId,
-        },
-      },
-    });
+    const progressKey = `@salah_companion:pronunciation_progress:${userId}`;
+    const progressJson = await AsyncStorage.getItem(progressKey);
+    const progressRecords: any[] = progressJson ? JSON.parse(progressJson) : [];
+
+    const progress = progressRecords.find((r: any) => r.letterId === letterId);
 
     if (!progress) {
       return {
@@ -496,10 +497,12 @@ export async function getLetterProgress(
     }
 
     return {
-      isLearned: progress.isLearned,
-      timesPracticed: progress.timesPracticed,
-      accuracyScore: progress.accuracyScore ? Number(progress.accuracyScore) : null,
-      lastPracticedAt: progress.lastPracticedAt,
+      isLearned: progress.isLearned || false,
+      timesPracticed: progress.timesPracticed || 0,
+      accuracyScore: progress.accuracyScore !== undefined && progress.accuracyScore !== null 
+        ? Number(progress.accuracyScore) 
+        : null,
+      lastPracticedAt: progress.lastPracticedAt ? new Date(progress.lastPracticedAt) : null,
     };
   } catch (error) {
     console.error('Error fetching letter progress:', error);

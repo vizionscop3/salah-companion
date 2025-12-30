@@ -1,15 +1,15 @@
 /**
- * Home Screen
+ * Home Screen - Material Neubrutomorphism
  *
- * Main landing screen showing prayer times, quick actions, and progress.
+ * Main landing screen with Material Neubrutomorphism design.
+ * Shows prayer times, quick actions, and progress.
  */
 
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Card, Title, Paragraph, Button} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
+import {spacing, typography, colors} from '@constants/theme';
 import {usePrayerTimes} from '@hooks/usePrayerTimes';
 import {formatPrayerTime} from '@services/prayer/prayerTimeService';
 import {useNavigation} from '@react-navigation/native';
@@ -18,11 +18,14 @@ import {
   ProgressCard,
   RecentAchievements,
   AchievementUnlockModal,
+  NeubrutalCard,
+  NeubrutalButton,
+  NotificationList,
 } from '@components/index';
 import {useProgress} from '@hooks/useProgress';
 import {useAuth} from '@context/AuthContext';
 import {useAchievements} from '@hooks/useAchievements';
-import {useState, useEffect} from 'react';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const HomeScreen: React.FC = () => {
   const {currentTheme} = useTheme();
@@ -38,13 +41,12 @@ export const HomeScreen: React.FC = () => {
 
   const [unlockedAchievement, setUnlockedAchievement] = useState<any>(null);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'home' | 'notifications'>('home');
 
-  // Check for new achievements when progress updates
   useEffect(() => {
     if (user?.id && progress) {
-      checkForNewAchievements().then(newlyUnlocked => {
+      checkForNewAchievements().then((newlyUnlocked) => {
         if (newlyUnlocked.length > 0) {
-          // Show unlock modal for the first newly unlocked achievement
           setUnlockedAchievement(newlyUnlocked[0]);
           setShowUnlockModal(true);
         }
@@ -52,38 +54,34 @@ export const HomeScreen: React.FC = () => {
     }
   }, [user?.id, progress, checkForNewAchievements]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}>
+  const renderContent = () => {
+    if (activeTab === 'notifications') {
+      return <NotificationList />;
+    }
+
+    return (
+      <>
         <View style={styles.header}>
-          <Text style={[styles.greeting, {color: currentTheme.colors.text}]}>
-            As-salamu alaykum
-          </Text>
-          <Text style={[styles.subtitle, {color: currentTheme.colors.text}]}>
-            Welcome to Salah Companion
-          </Text>
+          <Text style={styles.greeting}>As-salamu alaykum</Text>
+          <Text style={styles.subtitle}>Welcome to Salah Companion</Text>
         </View>
 
         {nextPrayer && prayerTimes && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Next Prayer</Title>
-              <Paragraph>
-                {nextPrayer.prayer.charAt(0).toUpperCase() +
-                  nextPrayer.prayer.slice(1)}{' '}
-                - {formatPrayerTime(nextPrayer.time)}
-              </Paragraph>
-              <Paragraph>
+          <NeubrutalCard style={styles.nextPrayerCard} shadowSize="medium">
+            <View style={styles.nextPrayerContent}>
+              <Text style={styles.nextPrayerLabel}>Next Prayer</Text>
+              <Text style={styles.nextPrayerName}>
+                {nextPrayer.prayer.charAt(0).toUpperCase() + nextPrayer.prayer.slice(1)}
+              </Text>
+              <Text style={styles.nextPrayerTime}>{formatPrayerTime(nextPrayer.time)}</Text>
+              <Text style={styles.nextPrayerRemaining}>
                 {Math.floor(
-                  (nextPrayer.time.getTime() - new Date().getTime()) /
-                    (1000 * 60),
+                  (nextPrayer.time.getTime() - new Date().getTime()) / (1000 * 60),
                 )}{' '}
                 minutes remaining
-              </Paragraph>
-            </Card.Content>
-          </Card>
+              </Text>
+            </View>
+          </NeubrutalCard>
         )}
 
         <ProgressCard
@@ -103,32 +101,79 @@ export const HomeScreen: React.FC = () => {
 
         <QiblaCompass showDistance={true} />
 
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Quick Actions</Title>
-            <Button
-              mode="contained"
+        <NeubrutalCard style={styles.quickActionsCard} shadowSize="medium">
+          <Text style={styles.quickActionsTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsList}>
+            <NeubrutalButton
+              title="Start Guided Prayer"
               onPress={() => (navigation as any).navigate('GuidedSalah', {prayer: 'fajr'})}
+              size="medium"
+              variant="primary"
               style={styles.actionButton}
-              contentStyle={styles.actionButtonContent}>
-              Start Guided Prayer
-            </Button>
-            <Button
-              mode="outlined"
+            />
+            <NeubrutalButton
+              title="Practice Recitation"
               onPress={() => (navigation as any).navigate('Learning')}
+              size="medium"
+              variant="secondary"
               style={styles.actionButton}
-              contentStyle={styles.actionButtonContent}>
-              Practice Recitation
-            </Button>
-            <Button
-              mode="outlined"
+            />
+            <NeubrutalButton
+              title="Learn Arabic"
               onPress={() => (navigation as any).navigate('Learning')}
+              size="medium"
+              variant="outline"
               style={styles.actionButton}
-              contentStyle={styles.actionButtonContent}>
-              Learn Arabic
-            </Button>
-          </Card.Content>
-        </Card>
+            />
+          </View>
+        </NeubrutalCard>
+      </>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header with Tabs */}
+      <View style={styles.headerContainer}>
+        <View style={styles.locationHeader}>
+          <MaterialCommunityIcons name="map-marker" size={20} color={colors.primary.main} />
+          <Text style={styles.locationText}>Al-aksa</Text>
+        </View>
+        <View style={styles.headerActions}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'home' && styles.tabActive,
+              ]}
+              onPress={() => setActiveTab('home')}>
+              <MaterialCommunityIcons
+                name="home"
+                size={20}
+                color={activeTab === 'home' ? colors.background.default : colors.text.secondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'notifications' && styles.tabActive,
+              ]}
+              onPress={() => setActiveTab('notifications')}>
+              <MaterialCommunityIcons
+                name="bell"
+                size={20}
+                color={activeTab === 'notifications' ? colors.background.default : colors.text.secondary}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+        {renderContent()}
       </ScrollView>
 
       {/* Achievement Unlock Modal */}
@@ -147,34 +192,115 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.surface.secondary,
+    borderBottomWidth: 3,
+    borderBottomColor: colors.primary.main,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  locationText: {
+    ...typography.body1,
+    fontWeight: '600',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  tab: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: colors.surface.tertiary,
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabActive: {
+    backgroundColor: colors.primary.main,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: spacing.md,
+    gap: spacing.md,
   },
   header: {
     marginBottom: spacing.lg,
   },
   greeting: {
     ...typography.h2,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: spacing.sm,
+    fontFamily: 'Poppins',
   },
   subtitle: {
     ...typography.body1,
-    opacity: 0.7,
+    color: colors.text.secondary,
   },
-  card: {
+  nextPrayerCard: {
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
+  },
+  nextPrayerContent: {
+    gap: spacing.xs,
+  },
+  nextPrayerLabel: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  nextPrayerName: {
+    ...typography.h3,
+    fontWeight: '700',
+    color: colors.primary.main,
+    fontFamily: 'Poppins',
+  },
+  nextPrayerTime: {
+    ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
+  },
+  nextPrayerRemaining: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  quickActionsCard: {
+    padding: spacing.md,
+  },
+  quickActionsTitle: {
+    ...typography.h5,
+    fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.md,
-    elevation: 2,
+    fontFamily: 'Poppins',
+  },
+  quickActionsList: {
+    gap: spacing.sm,
   },
   actionButton: {
-    marginTop: spacing.sm,
-  },
-  actionButtonContent: {
-    paddingVertical: spacing.xs,
+    width: '100%',
   },
 });
-

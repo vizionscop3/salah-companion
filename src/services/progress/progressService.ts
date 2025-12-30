@@ -162,6 +162,24 @@ export async function getTodayProgress(userId: string): Promise<ProgressStats> {
       return progressDate.getTime() === today.getTime();
     });
 
+    // Calculate streak if we have today's records (ensure streak is up-to-date)
+    let currentStreak = todayProgress?.currentStreak ?? 0;
+    let longestStreak = todayProgress?.longestStreak ?? 0;
+    
+    if (todayRecords.length > 0) {
+      // Recalculate streak to ensure it's current
+      const streak = await calculateStreak(userId, today);
+      currentStreak = streak.currentStreak;
+      longestStreak = Math.max(longestStreak, currentStreak);
+      
+      // Update stored progress if it exists
+      if (todayProgress) {
+        todayProgress.currentStreak = currentStreak;
+        todayProgress.longestStreak = longestStreak;
+        await AsyncStorage.setItem(progressKey, JSON.stringify(allProgress));
+      }
+    }
+
     // Get achievement count
     const achievementsKey = STORAGE_KEYS.ACHIEVEMENTS(userId);
     const achievementsJson = await AsyncStorage.getItem(achievementsKey);
@@ -204,8 +222,8 @@ export async function getTodayProgress(userId: string): Promise<ProgressStats> {
     return {
       prayersCompleted,
       totalPrayers,
-      currentStreak: todayProgress?.currentStreak ?? 0,
-      longestStreak: todayProgress?.longestStreak ?? 0,
+      currentStreak,
+      longestStreak,
       achievements: achievements.length,
       todayProgress: prayersCompleted,
       recitationStats,
