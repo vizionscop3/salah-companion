@@ -12,6 +12,7 @@
  */
 
 import axios from 'axios';
+import {createSecureAxiosInstance, sanitizeApiResponse} from '@services/security/apiSecurityService';
 
 const QURAN_FOUNDATION_OAUTH_BASE =
   process.env.QURAN_FOUNDATION_OAUTH_BASE || 'https://oauth2.quran.foundation';
@@ -147,7 +148,10 @@ export async function quranFoundationGet<T = any>(
 
   const accessToken = await getAccessToken();
 
-  const response = await axios.get<T>(`${QURAN_FOUNDATION_CONTENT_BASE}${path}`, {
+  // Use secure axios instance
+  const secureAxios = createSecureAxiosInstance(QURAN_FOUNDATION_CONTENT_BASE);
+  
+  const response = await secureAxios.get<T>(path, {
     params,
     headers: {
       'x-auth-token': accessToken,
@@ -156,7 +160,9 @@ export async function quranFoundationGet<T = any>(
     },
   });
 
-  return response.data as T;
+  // Sanitize response data
+  const sanitizedData = sanitizeApiResponse(response.data);
+  return sanitizedData as T;
 }
 
 /**

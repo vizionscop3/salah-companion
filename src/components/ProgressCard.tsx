@@ -28,7 +28,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
   achievements = 0,
   showDetails = true,
 }) => {
-  const {currentTheme} = useTheme();
+  const {currentTheme, fontScale} = useTheme();
 
   const progress = totalPrayers > 0 ? prayersCompleted / totalPrayers : 0;
   const progressPercentage = Math.round(progress * 100);
@@ -46,7 +46,11 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
       accessibilityLabel={accessibilityLabel}>
       <Card.Content style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
+          <Text
+            style={[
+              styles.title,
+              {color: currentTheme.colors.text, fontSize: typography.h5.fontSize * fontScale},
+            ]}>
             Today's Progress
           </Text>
           <Text style={[styles.progressPercentage, {color: currentTheme.colors.primary}]}>

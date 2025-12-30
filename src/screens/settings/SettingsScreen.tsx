@@ -18,12 +18,21 @@ import {
 } from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
 import {useAuth} from '@context/AuthContext';
+import {Slider} from '@react-native-community/slider';
 import {spacing, typography, colors, elevation} from '@constants/theme';
 import {azanService, AzanVoice} from '@services/azan/azanService';
 import {prisma} from '@services/database/prismaClient';
 
 export const SettingsScreen: React.FC = () => {
-  const {currentTheme, isDark, toggleTheme} = useTheme();
+  const {
+    currentTheme,
+    isDark,
+    toggleTheme,
+    accessibilityMode,
+    setAccessibilityMode,
+    fontScale,
+    setFontScale,
+  } = useTheme();
   const {user} = useAuth();
   const [azanVoice, setAzanVoice] = useState<AzanVoice>('makkah');
   const [azanVolume, setAzanVolume] = useState(80);
@@ -245,6 +254,53 @@ export const SettingsScreen: React.FC = () => {
           </Card.Content>
         </Card>
 
+        {/* Accessibility Settings */}
+        <Card style={[styles.card, elevation[2]]}>
+          <Card.Content>
+            <Title>Accessibility</Title>
+            <List.Item
+              title="High Contrast Mode"
+              description="Increase contrast for better visibility"
+              left={props => <List.Icon {...props} icon="contrast-box" />}
+              right={() => (
+                <Switch
+                  value={accessibilityMode === 'highContrast'}
+                  onValueChange={enabled =>
+                    setAccessibilityMode(enabled ? 'highContrast' : 'normal')
+                  }
+                />
+              )}
+            />
+            <Divider style={styles.divider} />
+            <List.Item
+              title="Font Size"
+              description={`${Math.round(fontScale * 100)}%`}
+              left={props => <List.Icon {...props} icon="format-size" />}
+            />
+            <View style={styles.sliderContainer}>
+              <Slider
+                style={styles.slider}
+                minimumValue={0.8}
+                maximumValue={2.0}
+                step={0.1}
+                value={fontScale}
+                onValueChange={setFontScale}
+                minimumTrackTintColor={currentTheme.colors.primary}
+                maximumTrackTintColor={colors.surface.tertiary}
+                thumbTintColor={currentTheme.colors.primary}
+              />
+              <View style={styles.sliderLabels}>
+                <Text style={[styles.sliderLabel, {color: currentTheme.colors.text}]}>
+                  80%
+                </Text>
+                <Text style={[styles.sliderLabel, {color: currentTheme.colors.text}]}>
+                  200%
+                </Text>
+              </View>
+            </View>
+          </Card.Content>
+        </Card>
+
         {/* Save Button */}
         <Button
           mode="contained"
@@ -326,6 +382,19 @@ const styles = StyleSheet.create({
   },
   saveButtonContent: {
     paddingVertical: spacing.sm,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  sliderLabel: {
+    ...typography.caption,
+    fontSize: 12,
   },
 });
 
