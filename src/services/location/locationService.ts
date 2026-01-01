@@ -6,6 +6,7 @@
 
 import Geolocation from '@react-native-community/geolocation';
 import {Platform, PermissionsAndroid} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Location {
   latitude: number;
@@ -27,6 +28,16 @@ export interface LocationError {
 export async function requestLocationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     try {
+      // First check if permission is already granted
+      const checkResult = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      
+      if (checkResult) {
+        return true;
+      }
+
+      // Request permission with proper configuration
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
@@ -37,7 +48,10 @@ export async function requestLocationPermission(): Promise<boolean> {
           buttonPositive: 'OK',
         },
       );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      
+      const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
+      console.log(`Location permission result: ${granted} (granted: ${isGranted})`);
+      return isGranted;
     } catch (err) {
       console.error('Error requesting location permission:', err);
       return false;
@@ -52,6 +66,8 @@ export async function requestLocationPermission(): Promise<boolean> {
  */
 export function getCurrentLocation(): Promise<Location> {
   return new Promise((resolve, reject) => {
+    // Use faster, less accurate location first for better UX
+    // If high accuracy is needed, it can be requested separately
     Geolocation.getCurrentPosition(
       (position) => {
         resolve({
@@ -70,9 +86,9 @@ export function getCurrentLocation(): Promise<Location> {
         } as LocationError);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
+        enableHighAccuracy: false, // Changed to false for faster response
+        timeout: 3000, // Maximum 3 seconds timeout
+        maximumAge: 60000, // Accept cached location up to 1 minute old
       },
     );
   });
@@ -162,5 +178,99 @@ export async function reverseGeocode(
       country: undefined,
     };
   }
+}
+
+/**
+ * Manual Location Interface
+ */
+export interface ManualLocation {
+  state: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+const MANUAL_LOCATION_STORAGE_KEY = '@salah_companion:manual_location';
+
+/**
+ * Get manual location from storage
+ */
+export async function getManualLocation(): Promise<ManualLocation | null> {
+  try {
+    const stored = await AsyncStorage.getItem(MANUAL_LOCATION_STORAGE_KEY);
+    if (!stored) {
+      return null;
+    }
+    return JSON.parse(stored) as ManualLocation;
+  } catch (error) {
+    console.error('Error getting manual location:', error);
+    return null;
+  }
+}
+
+/**
+ * Set manual location in storage
+ */
+export async function setManualLocation(location: ManualLocation): Promise<void> {
+  try {
+    await AsyncStorage.setItem(MANUAL_LOCATION_STORAGE_KEY, JSON.stringify(location));
+  } catch (error) {
+    console.error('Error setting manual location:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clear manual location from storage
+ */
+export async function clearManualLocation(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(MANUAL_LOCATION_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing manual location:', error);
+  }
+}
+
+/**
+ * Get user location with priority: Manual > GPS > Default
+ */
+export async function getUserLocation(): Promise<Location & {timezone: string; source: 'manual' | 'gps' | 'default'}> {
+  // Priority 1: Check for manual location
+  const manualLocation = await getManualLocation();
+  if (manualLocation) {
+    return {
+      latitude: manualLocation.latitude,
+      longitude: manualLocation.longitude,
+      timezone: manualLocation.timezone,
+      source: 'manual',
+    };
+  }
+
+  // Priority 2: Try to get GPS location
+  try {
+    const hasPermission = await requestLocationPermission();
+    if (hasPermission) {
+      const gpsLocation = await getCurrentLocation();
+      const timezone = getTimezoneFromLocation(gpsLocation.latitude, gpsLocation.longitude);
+      return {
+        ...gpsLocation,
+        timezone,
+        source: 'gps',
+      };
+    }
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('GPS location failed, using default:', error);
+    }
+  }
+
+  // Priority 3: Use default location (New York)
+  return {
+    latitude: 40.7128,
+    longitude: -74.006,
+    timezone: 'America/New_York',
+    source: 'default',
+  };
 }
 

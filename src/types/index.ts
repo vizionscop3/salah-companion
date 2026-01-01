@@ -68,6 +68,7 @@ export type RootStackParamList = {
   Home: undefined;
   PrayerTimes: undefined;
   Learning: undefined;
+  Quran: undefined;
   Profile: undefined;
 };
 
@@ -75,6 +76,7 @@ export type TabParamList = {
   Home: undefined;
   PrayerTimes: undefined;
   Learning: undefined;
+  Quran: undefined;
   Profile: undefined;
 };
 

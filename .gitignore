@@ -45,6 +45,13 @@ ios/DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcuserdatad/
 
+# Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+*.aab
+
 # Metro
 .metro-health-check*
 

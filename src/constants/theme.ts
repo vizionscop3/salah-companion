@@ -5,23 +5,24 @@
  * - Material UI's professional polish
  * - Neubrutomorphism's bold authenticity
  * - Neumorphic depth and tactile feedback
+ *
+ * Design DNA: 40% Neubrutalism + 30% Neumorphism + 30% Material Design
  */
 
 import {MD3LightTheme, MD3DarkTheme} from 'react-native-paper';
 
-// Color System
+// Color System - Material Neubrutomorphism
 export const colors = {
   primary: {
-    main: '#1976D2', // Material Blue
-    light: '#42A5F5',
-    dark: '#1565C0',
-    contrastText: '#FFFFFF',
+    main: '#3DD9C5', // Turquoise - Primary brand color
+    dark: '#2AB9A9',
+    light: '#6FE8D9',
+    contrastText: '#0F1419',
   },
   secondary: {
-    main: '#9C27B0', // Material Purple
-    light: '#BA68C8',
-    dark: '#7B1FA2',
-    contrastText: '#FFFFFF',
+    main: '#A78BFA', // Purple
+    light: '#C4B5FD',
+    dark: '#8B5CF6',
   },
   success: {
     main: '#388E3C',
@@ -29,40 +30,68 @@ export const colors = {
     dark: '#2E7D32',
   },
   warning: {
-    main: '#F57C00',
-    light: '#FFB74D',
-    dark: '#E65100',
+    main: '#FFB84D', // Gold
+    light: '#FFD699',
+    dark: '#E5A63D',
   },
   error: {
-    main: '#D32F2F',
-    light: '#E57373',
-    dark: '#C62828',
+    main: '#FF6B9D', // Rose
+    light: '#FF8FB3',
+    dark: '#E55A8A',
   },
   accent: {
-    bold: '#FF6B6B',
-    calm: '#4ECDC4',
-    dark: '#2C3E50',
+    gold: '#FFB84D', // Dhuhr, Sunrise
+    rose: '#FF6B9D', // Asr
+    purple: '#A78BFA', // Fajr
+    blue: '#60A5FA', // Info
+    turquoise: '#3DD9C5', // Primary
+    bold: '#FFB84D', // Alias for gold (for compatibility)
   },
   surface: {
-    light: '#F5F5F5',
-    main: '#FFFFFF',
-    dark: '#E0E0E0',
-    elevated: '#FAFAFA',
+    primary: '#0F1419', // Main background
+    secondary: '#1A2332', // Cards
+    tertiary: '#242F42', // Elevated
+    elevated: '#2A3647', // Floating
+    main: '#1A2332', // Alias for secondary (for compatibility)
+    dark: '#0A0E13', // Alias for background.dark (for compatibility)
   },
   text: {
-    primary: '#212121',
-    secondary: '#757575',
-    disabled: '#BDBDBD',
-    hint: '#9E9E9E',
+    primary: '#FFFFFF',
+    secondary: '#A8B2C1',
+    muted: '#6B7280',
+    disabled: '#4B5563',
   },
   background: {
-    default: '#FFFFFF',
-    paper: '#FAFAFA',
-    dark: '#121212',
+    default: '#0F1419',
+    paper: '#1A2332',
+    dark: '#0A0E13',
+  },
+  border: {
+    primary: '#3DD9C5',
+    dark: '#0A0E13',
+    secondary: '#1A2332', // Alias for surface.secondary (for compatibility)
+    width: 3,
+    widthThick: 4,
   },
 };
 
-// Material 3 Light Theme
+// Material 3 Dark Theme (Primary theme for Neubrutomorphism)
+export const darkTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: colors.primary.main,
+    secondary: colors.secondary.main,
+    error: colors.error.main,
+    surface: colors.surface.secondary,
+    background: colors.background.default,
+    text: colors.text.primary,
+    onSurface: colors.text.primary,
+    onBackground: colors.text.primary,
+  },
+};
+
+// Material 3 Light Theme (for compatibility)
 export const lightTheme = {
   ...MD3LightTheme,
   colors: {
@@ -70,34 +99,19 @@ export const lightTheme = {
     primary: colors.primary.main,
     secondary: colors.secondary.main,
     error: colors.error.main,
-    surface: colors.surface.main,
+    surface: colors.surface.secondary,
     background: colors.background.default,
     text: colors.text.primary,
   },
 };
 
-// Material 3 Dark Theme
-export const darkTheme = {
-  ...MD3DarkTheme,
-  colors: {
-    ...MD3DarkTheme.colors,
-    primary: colors.primary.light,
-    secondary: colors.secondary.light,
-    error: colors.error.light,
-    surface: colors.surface.dark,
-    background: colors.background.dark,
-    text: '#FFFFFF',
-  },
-};
-
-// Spacing System (Material 8dp Grid)
+// Spacing System (Fibonacci-Based Scale)
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  xs: 8, // 0.5rem
+  sm: 16, // 1rem
+  md: 24, // 1.5rem
+  lg: 32, // 2rem
+  xl: 48, // 3rem
   brutalist: {
     small: 12,
     medium: 20,
@@ -105,65 +119,179 @@ export const spacing = {
   },
 };
 
-// Typography
+// Typography - Material Neubrutomorphism
 export const typography = {
+  // Display Font: Poppins
   h1: {
-    fontSize: 72,
-    fontWeight: '900' as const,
-    lineHeight: 86.4,
-    letterSpacing: -0.5,
+    fontSize: 48,
+    fontWeight: '800' as const,
+    lineHeight: 57.6,
+    fontFamily: 'Poppins',
   },
   h2: {
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: '700' as const,
-    lineHeight: 62.4,
-    letterSpacing: -0.25,
+    lineHeight: 43.2,
+    fontFamily: 'Poppins',
   },
   h3: {
-    fontSize: 36,
-    fontWeight: '600' as const,
-    lineHeight: 50.4,
+    fontSize: 30,
+    fontWeight: '700' as const,
+    lineHeight: 36,
+    fontFamily: 'Poppins',
   },
   h4: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '600' as const,
-    lineHeight: 39.2,
+    lineHeight: 30,
+    fontFamily: 'Poppins',
   },
   h5: {
-    fontSize: 24,
-    fontWeight: '500' as const,
-    lineHeight: 36,
+    fontSize: 20,
+    fontWeight: '600' as const,
+    lineHeight: 26,
+    fontFamily: 'Poppins',
   },
   h6: {
-    fontSize: 20,
-    fontWeight: '500' as const,
-    lineHeight: 30,
+    fontSize: 18,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+    fontFamily: 'Poppins',
   },
+  // Body Font: Inter
   body1: {
     fontSize: 16,
     fontWeight: '400' as const,
-    lineHeight: 25.6,
+    lineHeight: 24,
+    fontFamily: 'Inter',
   },
   body2: {
     fontSize: 14,
     fontWeight: '400' as const,
-    lineHeight: 22.4,
+    lineHeight: 20,
+    fontFamily: 'Inter',
   },
   button: {
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     lineHeight: 24,
     letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
+    fontFamily: 'Poppins',
   },
   caption: {
     fontSize: 12,
     fontWeight: '400' as const,
     lineHeight: 18,
+    fontFamily: 'Inter',
   },
 };
 
-// Elevation & Shadows
+// Border Radius Scale
+export const borderRadius = {
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  full: 9999,
+};
+
+// Triple-Layer Shadow System - Material Neubrutomorphism
+// Layer 1: Neumorphic Inner (Depth)
+// Layer 2: Outer Glow (Atmosphere)
+// Layer 3: Brutal Offset (Punch)
+
+// Neumorphic Inner Shadows
+export const neumorphicInner = {
+  pressed: {
+    shadowColor: '#000',
+    shadowOffset: {width: 2, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  elevated: {
+    shadowColor: '#FFF',
+    shadowOffset: {width: -2, height: -2},
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+};
+
+// Outer Glow Shadows
+export const outerGlow = {
+  small: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  large: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  primary: {
+    shadowColor: '#3DD9C5',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+};
+
+// Brutalist Offset Shadows
+export const brutalistShadows = {
+  small: {
+    shadowColor: '#3DD9C5',
+    shadowOffset: {width: 3, height: 3},
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  medium: {
+    shadowColor: '#3DD9C5',
+    shadowOffset: {width: 6, height: 6},
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  large: {
+    shadowColor: '#3DD9C5',
+    shadowOffset: {width: 10, height: 10},
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 10,
+  },
+};
+
+// Combined Neubrutal Shadows (for use in components)
+export const neubrutalShadows = {
+  small: {
+    // Note: React Native doesn't support multiple shadows natively
+    // We'll use the brutal offset as primary with elevation
+    ...brutalistShadows.small,
+  },
+  medium: {
+    ...brutalistShadows.medium,
+  },
+  large: {
+    ...brutalistShadows.large,
+  },
+};
+
+// Material Elevation (for compatibility)
 export const elevation = {
   0: {
     shadowColor: '#000',
@@ -202,31 +330,6 @@ export const elevation = {
   },
 };
 
-// Brutalist Shadows
-export const brutalistShadows = {
-  small: {
-    shadowColor: '#000',
-    shadowOffset: {width: 4, height: 4},
-    shadowOpacity: 0.25,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  medium: {
-    shadowColor: '#000',
-    shadowOffset: {width: 6, height: 6},
-    shadowOpacity: 0.25,
-    shadowRadius: 0,
-    elevation: 6,
-  },
-  large: {
-    shadowColor: '#000',
-    shadowOffset: {width: 8, height: 8},
-    shadowOpacity: 0.25,
-    shadowRadius: 0,
-    elevation: 8,
-  },
-};
-
 // Export theme object
 export const theme = {
   light: lightTheme,
@@ -236,5 +339,9 @@ export const theme = {
   typography,
   elevation,
   brutalistShadows,
+  neubrutalShadows,
+  neumorphicInner,
+  outerGlow,
+  borderRadius,
 };
 

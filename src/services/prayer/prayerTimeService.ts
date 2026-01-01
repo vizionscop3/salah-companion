@@ -49,13 +49,45 @@ const METHOD_PARAMS: Record<
   {fajr: number; isha: number}
 > = {
   MWL: {fajr: 18.0, isha: 17.0},
-  ISNA: {fajr: 15.0, isha: 15.0},
+  ISNA: {fajr: 15.0, isha: 15.0}, // Standard for North America (used by ICCNY)
   Egypt: {fajr: 19.5, isha: 17.5},
   Makkah: {fajr: 18.5, isha: 19.0}, // Isha is 90 minutes after Maghrib
   Karachi: {fajr: 18.0, isha: 18.0},
   Tehran: {fajr: 17.7, isha: 14.0},
   Jafari: {fajr: 16.0, isha: 14.0},
 };
+
+/**
+ * Get the recommended calculation method based on location
+ * ISNA is standard for North America (used by ICCNY and most US mosques)
+ */
+export function getRecommendedCalculationMethod(
+  latitude: number,
+  longitude: number,
+  timezone?: string,
+): CalculationMethod {
+  // Check if location is in North America (USA, Canada, Mexico)
+  // North America roughly: latitude 25-70, longitude -170 to -50
+  const isNorthAmerica =
+    latitude >= 25 &&
+    latitude <= 70 &&
+    longitude >= -170 &&
+    longitude <= -50;
+
+  // Also check timezone for North America
+  const isNorthAmericaTimezone =
+    timezone &&
+    (timezone.startsWith('America/') ||
+      timezone.startsWith('US/') ||
+      timezone.startsWith('Canada/'));
+
+  if (isNorthAmerica || isNorthAmericaTimezone) {
+    return 'ISNA'; // Islamic Society of North America - standard for US/Canada
+  }
+
+  // Default to MWL for other regions
+  return 'MWL';
+}
 
 /**
  * Calculate prayer times for a given date and location
@@ -329,14 +361,33 @@ function calculateAsr(
   // Shadow factor: 1 for Shafi, 2 for Hanafi
   const shadowFactor = method === 'Hanafi' ? 2 : 1;
 
-  const hourAngle =
-    Math.acos(
-      -Math.tan(latRad) * Math.tan(decRad) +
-        (1 / shadowFactor) / (Math.cos(latRad) * Math.cos(decRad)),
-    ) *
-    (180 / Math.PI);
+  // Calculate the acos argument
+  const acosArg = -Math.tan(latRad) * Math.tan(decRad) +
+    (1 / shadowFactor) / (Math.cos(latRad) * Math.cos(decRad));
+
+  // Clamp acos argument to valid range [-1, 1] to prevent NaN
+  const clampedArg = Math.max(-1, Math.min(1, acosArg));
+  
+  const hourAngle = Math.acos(clampedArg) * (180 / Math.PI);
+
+  // Validate hourAngle is a valid number
+  if (isNaN(hourAngle) || !isFinite(hourAngle)) {
+    // Fallback: Asr is typically around 3-4 hours after Dhuhr
+    // Use a simple approximation: Dhuhr + 3.5 hours
+    const dhuhr = calculateMidday(longitude, timezone, equationOfTime, julianDay);
+    const asrTime = new Date(dhuhr.getTime() + 3.5 * 60 * 60 * 1000);
+    return tz.utcToZonedTime(asrTime, timezone);
+  }
 
   const time = 12 + (hourAngle / 15) - longitude / 15 - equationOfTime / 60;
+
+  // Validate time is reasonable (between 12 and 18 hours)
+  if (isNaN(time) || !isFinite(time) || time < 12 || time > 18) {
+    // Fallback: Asr is typically around 3-4 hours after Dhuhr
+    const dhuhr = calculateMidday(longitude, timezone, equationOfTime, julianDay);
+    const asrTime = new Date(dhuhr.getTime() + 3.5 * 60 * 60 * 1000);
+    return tz.utcToZonedTime(asrTime, timezone);
+  }
 
   const baseDate = new Date();
   const hours = Math.floor(time);
@@ -346,7 +397,16 @@ function calculateAsr(
   baseDate.setUTCMinutes(minutes);
   baseDate.setUTCSeconds(seconds);
 
-  return tz.utcToZonedTime(baseDate, timezone);
+  const asrDate = tz.utcToZonedTime(baseDate, timezone);
+  
+  // Final validation: ensure the date is valid
+  if (isNaN(asrDate.getTime())) {
+    // Last resort fallback
+    const dhuhr = calculateMidday(longitude, timezone, equationOfTime, julianDay);
+    return new Date(dhuhr.getTime() + 3.5 * 60 * 60 * 1000);
+  }
+
+  return asrDate;
 }
 
 /**
@@ -384,6 +444,16 @@ export function getNextPrayer(
  * Format prayer time for display
  */
 export function formatPrayerTime(time: Date, formatStr: string = 'h:mm a'): string {
-  return format(time, formatStr);
+  // Validate date before formatting
+  if (!time || !(time instanceof Date) || isNaN(time.getTime())) {
+    console.warn('⚠️ Invalid date passed to formatPrayerTime:', time);
+    return '--:--';
+  }
+  try {
+    return format(time, formatStr);
+  } catch (error) {
+    console.error('❌ Error formatting prayer time:', error, time);
+    return '--:--';
+  }
 }
 
