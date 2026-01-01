@@ -5,7 +5,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, ScrollView, Text} from 'react-native';
+import {View, StyleSheet, ScrollView, Text, ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ActivityIndicator, ProgressBar} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
@@ -293,7 +293,7 @@ export const SurahPracticeScreen: React.FC<SurahPracticeScreenProps> = ({route})
                   color={colors.background.default}
                 />
               }
-              style={[styles.recordButton, styles.stopButton]}
+              style={StyleSheet.flatten([styles.recordButton, styles.stopButton])}
             />
           )}
 
@@ -448,9 +448,9 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   recordingText: {
+    ...typography.body1,
     color: colors.error.main,
     fontWeight: '600',
-    ...typography.body1,
   },
   progressBar: {
     marginTop: spacing.sm,

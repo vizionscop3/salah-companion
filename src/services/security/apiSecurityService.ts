@@ -29,6 +29,7 @@ export function createSecureAxiosInstance(baseURL?: string): AxiosInstance {
     baseURL,
     timeout: 30000,
     headers: {
+      // @ts-ignore - Axios headers type is complex, this is valid
       ...SECURITY_HEADERS,
       'Content-Type': 'application/json',
     },
@@ -41,7 +42,7 @@ export function createSecureAxiosInstance(baseURL?: string): AxiosInstance {
       config.headers = {
         ...config.headers,
         ...SECURITY_HEADERS,
-      };
+      } as any;
 
       // Validate request URL (prevent SSRF)
       if (config.url) {
@@ -49,8 +50,9 @@ export function createSecureAxiosInstance(baseURL?: string): AxiosInstance {
       }
 
       // Add timestamp for request tracking
-      config.metadata = {
-        ...config.metadata,
+      // @ts-ignore - metadata is a custom property for request tracking
+      (config as any).metadata = {
+        ...(config as any).metadata,
         requestTime: Date.now(),
       };
 

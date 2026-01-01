@@ -5,7 +5,7 @@
  * Supports word-by-word, ayah, and full surah practice modes.
  */
 
-import {prismaClient} from '@services/database/prismaClient';
+import prismaClient from '@services/database/prismaClient';
 import RNFS from 'react-native-fs';
 import {Platform} from 'react-native';
 
@@ -201,7 +201,7 @@ export async function getRecitationHistory(
       skip: options?.offset || 0,
     });
 
-    return practices.map(p => ({
+    return practices.map((p: any) => ({
       id: p.id,
       userId: p.userId,
       surahId: p.surahId || undefined,
@@ -243,12 +243,12 @@ export async function getRecitationStats(userId: string): Promise<{
     const totalPractices = practices.length;
     const practicesWithScores = practices.filter(p => p.accuracyScore !== null);
     const averageAccuracy = practicesWithScores.length > 0
-      ? practicesWithScores.reduce((sum, p) => sum + Number(p.accuracyScore || 0), 0) / practicesWithScores.length
+      ? practicesWithScores.reduce((sum: number, p: any) => sum + Number(p.accuracyScore || 0), 0) / practicesWithScores.length
       : 0;
 
     const practicesWithTajweed = practices.filter(p => p.tajweedScore !== null);
     const averageTajweed = practicesWithTajweed.length > 0
-      ? practicesWithTajweed.reduce((sum, p) => sum + Number(p.tajweedScore || 0), 0) / practicesWithTajweed.length
+      ? practicesWithTajweed.reduce((sum: number, p: any) => sum + Number(p.tajweedScore || 0), 0) / practicesWithTajweed.length
       : 0;
 
     const practicesByMode: Record<PracticeMode, number> = {
@@ -256,7 +256,7 @@ export async function getRecitationStats(userId: string): Promise<{
       ayah: 0,
       surah: 0,
     };
-    practices.forEach(p => {
+    practices.forEach((p: any) => {
       const mode = p.practiceMode as PracticeMode;
       if (mode in practicesByMode) {
         practicesByMode[mode]++;
@@ -267,16 +267,16 @@ export async function getRecitationStats(userId: string): Promise<{
     const recent = practices.slice(0, 10);
     const previous = practices.slice(10, 20);
     const recentAvg = recent.length > 0
-      ? recent.reduce((sum, p) => sum + Number(p.accuracyScore || 0), 0) / recent.length
+      ? recent.reduce((sum: number, p: any) => sum + Number(p.accuracyScore || 0), 0) / recent.length
       : 0;
     const previousAvg = previous.length > 0
-      ? previous.reduce((sum, p) => sum + Number(p.accuracyScore || 0), 0) / previous.length
+      ? previous.reduce((sum: number, p: any) => sum + Number(p.accuracyScore || 0), 0) / previous.length
       : 0;
     const recentImprovement = previousAvg > 0 ? ((recentAvg - previousAvg) / previousAvg) * 100 : 0;
 
     // Find best surah (most practiced with highest average)
     const surahStats = new Map<string, {count: number; totalScore: number}>();
-    practices.forEach(p => {
+    practices.forEach((p: any) => {
       if (p.surahId && p.accuracyScore) {
         const existing = surahStats.get(p.surahId) || {count: 0, totalScore: 0};
         surahStats.set(p.surahId, {

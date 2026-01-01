@@ -1,5 +1,5 @@
 /**
- * Azan Education Screen
+ * Azan Education Screen - Material Neubrutomorphism
  *
  * Educational content about Azan (Call to Prayer) including meaning, response, and proper conduct.
  */
@@ -7,13 +7,13 @@
 import React, {useState, useMemo} from 'react';
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Card, Title, Paragraph, Button, Divider} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
-import {islamicShadows, islamicBorderRadius} from '@constants/islamicTheme';
+import {spacing, typography, colors, borderRadius, brutalistShadows} from '@constants/theme';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '@context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NeubrutalCard, NeubrutalButton, AnimatedCard} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface AzanPhrase {
   arabic: string;
@@ -129,205 +129,323 @@ export const AzanEducationScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}>
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
-            Azan Education
-          </Text>
-          <Text style={[styles.subtitle, {color: currentTheme.colors.text}]}>
+          <Text style={styles.title}>Azan Education</Text>
+          <Text style={styles.subtitle}>
             Learn the meaning and proper response to the Call to Prayer
           </Text>
         </View>
 
         {/* Introduction */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>What is Azan?</Title>
-            <Paragraph style={styles.paragraph}>
+        <AnimatedCard index={0} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="information"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>What is Azan?</Text>
+            </View>
+            <Text style={styles.paragraph}>
               The Azan (أذان) is the Islamic call to prayer, recited by a
               Muadhin (caller) to announce the time for salah. It is one of the
               most beautiful and spiritually significant sounds in Islam.
-            </Paragraph>
-            <Paragraph style={styles.paragraph}>
+            </Text>
+            <Text style={styles.paragraph}>
               The Azan serves as a reminder to pause from our daily activities
               and turn our attention to Allah, establishing a connection between
               the worshipper and the Creator.
-            </Paragraph>
-          </Card.Content>
-        </Card>
+            </Text>
+          </View>
+        </AnimatedCard>
 
         {/* History and Significance */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>History and Significance</Title>
-            <Paragraph style={styles.paragraph}>
+        <AnimatedCard index={1} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="history"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>History and Significance</Text>
+            </View>
+            <Text style={styles.paragraph}>
               The Azan was established during the time of Prophet Muhammad (peace be upon him)
               in Madinah, approximately 1-2 years after the Hijrah (migration). The method
               of calling to prayer was revealed to Abdullah ibn Zaid in a dream, which he
               shared with the Prophet. The Prophet confirmed it and instructed Bilal ibn
               Rabah, a freed Abyssinian slave, to become the first Muadhin.
-            </Paragraph>
-            <Paragraph style={styles.paragraph}>
-              <Text style={styles.boldText}>Spiritual Significance:</Text>
-            </Paragraph>
+            </Text>
+            <Text style={styles.boldText}>Spiritual Significance:</Text>
             <View style={styles.responseList}>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • The Azan is a declaration of faith and unity
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • It calls Muslims to remember their purpose in life
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • It serves as a reminder of the five daily prayers
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • The Azan is considered a form of worship (Ibadah)
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Responding to the Azan brings great reward
-              </Text>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>The Azan is a declaration of faith and unity</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>It calls Muslims to remember their purpose in life</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>It serves as a reminder of the five daily prayers</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>The Azan is considered a form of worship (Ibadah)</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Responding to the Azan brings great reward</Text>
+              </View>
             </View>
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* Azan Phrases */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>The Azan Phrases</Title>
-            <Paragraph style={styles.sectionDescription}>
+        <AnimatedCard index={2} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="volume-high"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>The Azan Phrases</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
               Each phrase in the Azan has deep meaning and significance:
-            </Paragraph>
+            </Text>
             {azanPhrases.map((phrase, index) => (
               <View key={index} style={styles.phraseContainer}>
                 <View style={styles.arabicContainer}>
-                  <Text style={[styles.arabicText, {color: currentTheme.colors.primary}]}>
-                    {phrase.arabic}
-                  </Text>
+                  <Text style={styles.arabicText}>{phrase.arabic}</Text>
                 </View>
-                <Text style={[styles.transliteration, {color: currentTheme.colors.text}]}>
-                  {phrase.transliteration}
-                </Text>
-                <Text style={[styles.translation, {color: currentTheme.colors.text}]}>
-                  {phrase.translation}
-                </Text>
-                <Text style={[styles.meaning, {color: currentTheme.colors.text}]}>
-                  {phrase.meaning}
-                </Text>
-                {index < azanPhrases.length - 1 && <Divider style={styles.divider} />}
+                <Text style={styles.transliteration}>{phrase.transliteration}</Text>
+                <Text style={styles.translation}>{phrase.translation}</Text>
+                <Text style={styles.meaning}>{phrase.meaning}</Text>
+                {index < azanPhrases.length - 1 && <View style={styles.divider} />}
               </View>
             ))}
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* How to Respond */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>How to Respond to Azan</Title>
-            <Paragraph style={styles.sectionDescription}>
-              When you hear the Azan, it is recommended (Sunnah) to:
-            </Paragraph>
-            <View style={styles.responseList}>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Stop what you are doing and listen attentively
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Repeat the phrases after the Muadhin
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Say specific responses for certain phrases
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Make dua (supplication) after the Azan
-              </Text>
+        <AnimatedCard index={3} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="hand-wave"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>How to Respond to Azan</Text>
             </View>
-            <Divider style={styles.divider} />
-            <Title style={styles.subsectionTitle}>Response Phrases</Title>
+            <Text style={styles.sectionDescription}>
+              When you hear the Azan, it is recommended (Sunnah) to:
+            </Text>
+            <View style={styles.responseList}>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Stop what you are doing and listen attentively</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Repeat the phrases after the Muadhin</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Say specific responses for certain phrases</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Make dua (supplication) after the Azan</Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+            <Text style={styles.subsectionTitle}>Response Phrases</Text>
             {responsePhrases.map((item, index) => (
               <View key={index} style={styles.responseContainer}>
-                <Text style={[styles.arabicText, {color: currentTheme.colors.primary}]}>
-                  {item.arabic}
-                </Text>
-                <Text style={[styles.transliteration, {color: currentTheme.colors.text}]}>
-                  {item.transliteration}
-                </Text>
-                <Text style={[styles.responseText, {color: currentTheme.colors.text}]}>
-                  Response: {item.response}
-                </Text>
-                {index < responsePhrases.length - 1 && <Divider style={styles.divider} />}
+                <Text style={styles.arabicText}>{item.arabic}</Text>
+                <Text style={styles.transliteration}>{item.transliteration}</Text>
+                <Text style={styles.responseText}>Response: {item.response}</Text>
+                {index < responsePhrases.length - 1 && <View style={styles.divider} />}
               </View>
             ))}
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* Dua After Azan */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Dua After Azan</Title>
-            <Paragraph style={styles.sectionDescription}>
+        <AnimatedCard index={4} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="pray"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>Dua After Azan</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
               After the Azan is complete, it is recommended to recite this dua:
-            </Paragraph>
+            </Text>
             <View style={styles.duaContainer}>
-              <Text style={[styles.arabicText, {color: currentTheme.colors.primary}]}>
+              <Text style={styles.arabicText}>
                 اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته
               </Text>
-              <Text style={[styles.transliteration, {color: currentTheme.colors.text}]}>
+              <Text style={styles.transliteration}>
                 Allahumma rabba hadhihi ad-da'awati at-tammati wa as-salati al-qaimati, ati
                 Muhammadan al-wasilata wa al-fadilata, wa b'athhu maqaman mahmudan alladhi
                 wa'adtahu
               </Text>
-              <Text style={[styles.translation, {color: currentTheme.colors.text}]}>
+              <Text style={styles.translation}>
                 O Allah, Lord of this perfect call and established prayer, grant Muhammad the
                 intercession and favor, and raise him to the honored station You have promised
                 him.
               </Text>
             </View>
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* Conduct Guidelines */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Proper Conduct During Azan</Title>
-            <Paragraph style={styles.sectionDescription}>
-              When you hear the Azan, it is recommended (Sunnah) to:
-            </Paragraph>
-            <View style={styles.responseList}>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Stop talking and listen attentively
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Do not engage in unnecessary activities
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Repeat the phrases after the Muadhin (except during "Hayya ala as-Salah" and "Hayya ala al-Falah")
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Make dua after the Azan is complete
-              </Text>
-              <Text style={[styles.listItem, {color: currentTheme.colors.text}]}>
-                • Prepare for prayer mentally and physically
-              </Text>
+        <AnimatedCard index={5} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="book-open-page-variant"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>Proper Conduct During Azan</Text>
             </View>
-            <Divider style={styles.divider} />
-            <Paragraph style={styles.sectionDescription}>
+            <Text style={styles.sectionDescription}>
+              When you hear the Azan, it is recommended (Sunnah) to:
+            </Text>
+            <View style={styles.responseList}>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Stop talking and listen attentively</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Do not engage in unnecessary activities</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>
+                  Repeat the phrases after the Muadhin (except during "Hayya ala as-Salah" and "Hayya ala al-Falah")
+                </Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Make dua after the Azan is complete</Text>
+              </View>
+              <View style={styles.listItem}>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color={colors.primary.main}
+                  style={styles.listIcon}
+                />
+                <Text style={styles.listText}>Prepare for prayer mentally and physically</Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+            <Text style={styles.sectionDescription}>
               <Text style={styles.boldText}>Note:</Text> If you are in the bathroom, eating, or
               in a situation where you cannot respond, you may continue your activity but should
               respond mentally when possible.
-            </Paragraph>
-          </Card.Content>
-        </Card>
+            </Text>
+          </View>
+        </AnimatedCard>
 
         {/* Practice Button */}
-        <Button
-          mode="contained"
+        <NeubrutalButton
+          title="Configure Azan Settings"
           onPress={() => {
-            // Navigate to settings to configure Azan
             (navigation as any).navigate('Settings');
           }}
+          variant="primary"
+          size="medium"
           style={styles.practiceButton}
-          contentStyle={styles.practiceButtonContent}>
-          Configure Azan Settings
-        </Button>
+          icon={
+            <MaterialCommunityIcons
+              name="cog"
+              size={20}
+              color={colors.background.default}
+            />
+          }
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -336,40 +454,63 @@ export const AzanEducationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: spacing.md,
+    gap: spacing.md,
   },
   header: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
-    ...typography.h3,
-    marginBottom: spacing.xs,
+    ...typography.h2,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
   subtitle: {
-    ...typography.body2,
-    opacity: 0.7,
+    ...typography.body1,
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
   },
   card: {
-    marginBottom: spacing.md,
-    ...islamicShadows.medium,
-    borderRadius: islamicBorderRadius.large,
-    backgroundColor: '#FFFFFF',
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
+    borderWidth: 3,
+    borderRadius: borderRadius.lg,
+  },
+  cardContent: {
+    gap: spacing.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  cardTitle: {
+    ...typography.h5,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
   paragraph: {
     ...typography.body1,
-    marginBottom: spacing.sm,
+    color: colors.text.secondary,
     lineHeight: 24,
+    fontFamily: 'Inter',
   },
   sectionDescription: {
     ...typography.body1,
+    color: colors.text.secondary,
     marginBottom: spacing.md,
-    opacity: 0.8,
+    fontFamily: 'Inter',
   },
   phraseContainer: {
     marginBottom: spacing.md,
@@ -381,37 +522,61 @@ const styles = StyleSheet.create({
     ...typography.h4,
     fontSize: 24,
     textAlign: 'right',
+    color: colors.primary.main,
     marginBottom: spacing.xs,
+    fontFamily: 'Amiri',
   },
   transliteration: {
     ...typography.body1,
     fontStyle: 'italic',
+    color: colors.text.secondary,
     marginBottom: spacing.xs,
+    fontFamily: 'Inter',
   },
   translation: {
     ...typography.body1,
     fontWeight: '600',
+    color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontFamily: 'Poppins',
   },
   meaning: {
     ...typography.body2,
-    opacity: 0.7,
+    color: colors.text.secondary,
     lineHeight: 20,
+    fontFamily: 'Inter',
   },
   divider: {
+    height: 2,
+    backgroundColor: colors.surface.tertiary,
     marginVertical: spacing.md,
   },
   responseList: {
     marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   listItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  listIcon: {
+    marginTop: 2,
+  },
+  listText: {
     ...typography.body1,
-    marginBottom: spacing.xs,
+    flex: 1,
+    color: colors.text.secondary,
     lineHeight: 24,
+    fontFamily: 'Inter',
   },
   subsectionTitle: {
+    ...typography.h6,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
+    fontFamily: 'Poppins',
   },
   responseContainer: {
     marginBottom: spacing.md,
@@ -420,20 +585,20 @@ const styles = StyleSheet.create({
     ...typography.body1,
     marginTop: spacing.xs,
     fontStyle: 'italic',
+    color: colors.text.secondary,
+    fontFamily: 'Inter',
   },
   duaContainer: {
     marginTop: spacing.sm,
+    gap: spacing.sm,
   },
   practiceButton: {
     marginTop: spacing.md,
     marginBottom: spacing.lg,
-    borderRadius: islamicBorderRadius.medium,
-    ...islamicShadows.small,
-  },
-  practiceButtonContent: {
-    paddingVertical: spacing.sm,
   },
   boldText: {
     fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
 });

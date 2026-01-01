@@ -49,13 +49,45 @@ const METHOD_PARAMS: Record<
   {fajr: number; isha: number}
 > = {
   MWL: {fajr: 18.0, isha: 17.0},
-  ISNA: {fajr: 15.0, isha: 15.0},
+  ISNA: {fajr: 15.0, isha: 15.0}, // Standard for North America (used by ICCNY)
   Egypt: {fajr: 19.5, isha: 17.5},
   Makkah: {fajr: 18.5, isha: 19.0}, // Isha is 90 minutes after Maghrib
   Karachi: {fajr: 18.0, isha: 18.0},
   Tehran: {fajr: 17.7, isha: 14.0},
   Jafari: {fajr: 16.0, isha: 14.0},
 };
+
+/**
+ * Get the recommended calculation method based on location
+ * ISNA is standard for North America (used by ICCNY and most US mosques)
+ */
+export function getRecommendedCalculationMethod(
+  latitude: number,
+  longitude: number,
+  timezone?: string,
+): CalculationMethod {
+  // Check if location is in North America (USA, Canada, Mexico)
+  // North America roughly: latitude 25-70, longitude -170 to -50
+  const isNorthAmerica =
+    latitude >= 25 &&
+    latitude <= 70 &&
+    longitude >= -170 &&
+    longitude <= -50;
+
+  // Also check timezone for North America
+  const isNorthAmericaTimezone =
+    timezone &&
+    (timezone.startsWith('America/') ||
+      timezone.startsWith('US/') ||
+      timezone.startsWith('Canada/'));
+
+  if (isNorthAmerica || isNorthAmericaTimezone) {
+    return 'ISNA'; // Islamic Society of North America - standard for US/Canada
+  }
+
+  // Default to MWL for other regions
+  return 'MWL';
+}
 
 /**
  * Calculate prayer times for a given date and location

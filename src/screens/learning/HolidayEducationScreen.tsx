@@ -1,5 +1,5 @@
 /**
- * Holiday Education Screen
+ * Holiday Education Screen - Material Neubrutomorphism
  *
  * Educational content about Islamic holidays including significance, practices, and conduct guidelines.
  */
@@ -7,11 +7,11 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Card, Title, Paragraph, Divider, Chip} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
-import {spacing, typography} from '@constants/theme';
-import {islamicShadows, islamicBorderRadius} from '@constants/islamicTheme';
+import {spacing, typography, colors, borderRadius, brutalistShadows} from '@constants/theme';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {NeubrutalCard, NeubrutalButton, AnimatedCard} from '@components/index';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {MAJOR_HOLIDAYS, IslamicHoliday} from '@services/calendar/islamicCalendarService';
 
 interface HolidayContent {
@@ -216,9 +216,9 @@ export const HolidayEducationScreen: React.FC = () => {
   if (!selectedHoliday) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <Text style={[styles.errorText, {color: currentTheme.colors.error}]}>
-          Holiday not found
-        </Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Holiday not found</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -227,103 +227,149 @@ export const HolidayEducationScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}>
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, {color: currentTheme.colors.text}]}>
-            {selectedHoliday.englishName}
-          </Text>
-          <Text style={[styles.arabicTitle, {color: currentTheme.colors.primary}]}>
-            {selectedHoliday.arabicName}
-          </Text>
+          <Text style={styles.title}>{selectedHoliday.englishName}</Text>
+          <Text style={styles.arabicTitle}>{selectedHoliday.arabicName}</Text>
         </View>
 
         {/* Holiday Selector */}
         <View style={styles.holidaySelector}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {Object.values(HOLIDAY_CONTENT).map(holiday => (
-              <TouchableOpacity
-                key={holiday.key}
-                onPress={() => setSelectedHoliday(holiday)}
-                style={[
-                  styles.holidayChip,
-                  selectedHoliday.key === holiday.key && styles.holidayChipSelected,
-                ]}>
-                <Text
+            {Object.values(HOLIDAY_CONTENT).map((holiday, index) => {
+              const isSelected = selectedHoliday.key === holiday.key;
+              return (
+                <TouchableOpacity
+                  key={holiday.key}
+                  onPress={() => setSelectedHoliday(holiday)}
                   style={[
-                    styles.holidayChipText,
-                    selectedHoliday.key === holiday.key && styles.holidayChipTextSelected,
-                    {color: currentTheme.colors.text},
-                  ]}>
-                  {holiday.englishName}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                    styles.holidayChip,
+                    isSelected && styles.holidayChipSelected,
+                  ]}
+                  activeOpacity={0.7}>
+                  <Text
+                    style={[
+                      styles.holidayChipText,
+                      isSelected && styles.holidayChipTextSelected,
+                    ]}>
+                    {holiday.englishName}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
         {/* Significance */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Significance</Title>
-            <Paragraph style={styles.paragraph}>{selectedHoliday.significance}</Paragraph>
+        <AnimatedCard index={0} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="information"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>Significance</Text>
+            </View>
+            <Text style={styles.paragraph}>{selectedHoliday.significance}</Text>
             {selectedHoliday.historicalContext && (
               <>
-                <Divider style={styles.divider} />
-                <Title style={styles.subsectionTitle}>Historical Context</Title>
-                <Paragraph style={styles.paragraph}>
+                <View style={styles.divider} />
+                <View style={styles.cardHeader}>
+                  <MaterialCommunityIcons
+                    name="history"
+                    size={24}
+                    color={colors.primary.main}
+                  />
+                  <Text style={styles.cardTitle}>Historical Context</Text>
+                </View>
+                <Text style={styles.paragraph}>
                   {selectedHoliday.historicalContext}
-                </Paragraph>
+                </Text>
               </>
             )}
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* Recommended Practices */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Recommended Practices</Title>
+        <AnimatedCard index={1} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={24}
+                color={colors.success.main}
+              />
+              <Text style={styles.cardTitle}>Recommended Practices</Text>
+            </View>
             {selectedHoliday.recommendedPractices.map((practice, index) => (
               <View key={index} style={styles.practiceItem}>
-                <Text style={[styles.bullet, {color: currentTheme.colors.primary}]}>•</Text>
-                <Text style={[styles.practiceText, {color: currentTheme.colors.text}]}>
-                  {practice}
-                </Text>
+                <MaterialCommunityIcons
+                  name="check"
+                  size={20}
+                  color={colors.success.main}
+                  style={styles.bulletIcon}
+                />
+                <Text style={styles.practiceText}>{practice}</Text>
               </View>
             ))}
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
 
         {/* Prohibited Actions */}
-        {selectedHoliday.prohibitedActions && selectedHoliday.prohibitedActions.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Prohibited Actions</Title>
-              {selectedHoliday.prohibitedActions.map((action, index) => (
-                <View key={index} style={styles.practiceItem}>
-                  <Text style={[styles.bullet, {color: currentTheme.colors.error}]}>✗</Text>
-                  <Text style={[styles.practiceText, {color: currentTheme.colors.text}]}>
-                    {action}
-                  </Text>
+        {selectedHoliday.prohibitedActions &&
+          selectedHoliday.prohibitedActions.length > 0 && (
+            <AnimatedCard index={2} style={styles.card} shadowSize="medium">
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={24}
+                    color={colors.error.main}
+                  />
+                  <Text style={styles.cardTitle}>Prohibited Actions</Text>
                 </View>
-              ))}
-            </Card.Content>
-          </Card>
-        )}
+                {selectedHoliday.prohibitedActions.map((action, index) => (
+                  <View key={index} style={styles.practiceItem}>
+                    <MaterialCommunityIcons
+                      name="close"
+                      size={20}
+                      color={colors.error.main}
+                      style={styles.bulletIcon}
+                    />
+                    <Text style={styles.practiceText}>{action}</Text>
+                  </View>
+                ))}
+              </View>
+            </AnimatedCard>
+          )}
 
         {/* Conduct Guidelines */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Conduct Guidelines</Title>
+        <AnimatedCard index={3} style={styles.card} shadowSize="medium">
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons
+                name="book-open-page-variant"
+                size={24}
+                color={colors.primary.main}
+              />
+              <Text style={styles.cardTitle}>Conduct Guidelines</Text>
+            </View>
             {selectedHoliday.conductGuidelines.map((guideline, index) => (
               <View key={index} style={styles.practiceItem}>
-                <Text style={[styles.bullet, {color: currentTheme.colors.primary}]}>✓</Text>
-                <Text style={[styles.practiceText, {color: currentTheme.colors.text}]}>
-                  {guideline}
-                </Text>
+                <MaterialCommunityIcons
+                  name="arrow-right"
+                  size={20}
+                  color={colors.primary.main}
+                  style={styles.bulletIcon}
+                />
+                <Text style={styles.practiceText}>{guideline}</Text>
               </View>
             ))}
-          </Card.Content>
-        </Card>
+          </View>
+        </AnimatedCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -332,88 +378,118 @@ export const HolidayEducationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background.default,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: spacing.md,
+    gap: spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  errorText: {
+    ...typography.h5,
+    color: colors.error.main,
+    fontFamily: 'Poppins',
   },
   header: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
-    ...typography.h3,
-    marginBottom: spacing.xs,
+    ...typography.h2,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
   arabicTitle: {
     ...typography.h4,
-    fontSize: 28,
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.primary.main,
     textAlign: 'right',
+    fontFamily: 'Amiri',
   },
   holidaySelector: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   holidayChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginRight: spacing.sm,
-    borderRadius: islamicBorderRadius.medium,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface.tertiary,
+    borderWidth: 2,
+    borderColor: colors.surface.tertiary,
+    ...brutalistShadows.small,
   },
   holidayChipSelected: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#1976D2',
-    borderWidth: 2,
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
   },
   holidayChipText: {
     ...typography.body1,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: colors.text.secondary,
+    fontFamily: 'Poppins',
   },
   holidayChipTextSelected: {
     fontWeight: '700',
-    color: '#1976D2',
+    color: colors.background.default,
   },
   card: {
-    marginBottom: spacing.md,
-    ...islamicShadows.medium,
-    borderRadius: islamicBorderRadius.large,
-    backgroundColor: '#FFFFFF',
+    padding: spacing.lg,
+    backgroundColor: colors.surface.secondary,
+    borderColor: colors.primary.main,
+    borderWidth: 3,
+    borderRadius: borderRadius.lg,
+  },
+  cardContent: {
+    gap: spacing.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  cardTitle: {
+    ...typography.h5,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Poppins',
   },
   paragraph: {
     ...typography.body1,
-    marginBottom: spacing.sm,
+    color: colors.text.secondary,
     lineHeight: 24,
+    fontFamily: 'Inter',
   },
   divider: {
+    height: 2,
+    backgroundColor: colors.surface.tertiary,
     marginVertical: spacing.md,
-  },
-  subsectionTitle: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
   },
   practiceItem: {
     flexDirection: 'row',
     marginBottom: spacing.sm,
     alignItems: 'flex-start',
+    gap: spacing.sm,
   },
-  bullet: {
-    ...typography.h4,
-    marginRight: spacing.sm,
+  bulletIcon: {
     marginTop: 2,
   },
   practiceText: {
     ...typography.body1,
     flex: 1,
+    color: colors.text.secondary,
     lineHeight: 24,
-  },
-  errorText: {
-    ...typography.body1,
-    textAlign: 'center',
-    padding: spacing.lg,
+    fontFamily: 'Inter',
   },
 });
-

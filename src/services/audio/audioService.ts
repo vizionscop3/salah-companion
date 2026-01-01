@@ -10,6 +10,12 @@ import {Platform} from 'react-native';
 import {playQuranicAudio, getFullSurahAudio, isAudioCached} from './quranicAudioService';
 import {getAudioMapping, isQuranicRecitation} from './audioMapping';
 import {playPhrase, getPhraseInfo, type PrayerPhrase} from './prayerPhrasesService';
+import {
+  hasSparkTTSAudio,
+  playSparkTTSPhrase,
+  hasSparkTTSQuranAyah,
+  playSparkTTSQuranAyah,
+} from './sparkTTSAudioService';
 
 /**
  * Audio Service Class
@@ -45,10 +51,28 @@ class AudioService {
       try {
         const mapping = getAudioMapping(fileName);
         if (mapping && mapping.type === 'full_surah') {
+          // Try Spark-TTS first (if available)
+          if (await hasSparkTTSQuranAyah(mapping.surah, mapping.ayah)) {
+            await playSparkTTSQuranAyah(mapping.surah, mapping.ayah, volume);
+            if (onComplete) {
+              onComplete();
+            }
+            return;
+          }
+          // Fall back to API
           const filePath = await getFullSurahAudio(mapping.surah, 'alafasy');
           await this.playAudioFromPath(filePath, volume, onComplete);
           return;
         } else if (mapping) {
+          // Try Spark-TTS first (if available)
+          if (await hasSparkTTSQuranAyah(mapping.surah, mapping.ayah)) {
+            await playSparkTTSQuranAyah(mapping.surah, mapping.ayah, volume);
+            if (onComplete) {
+              onComplete();
+            }
+            return;
+          }
+          // Fall back to API
           await playQuranicAudio(mapping.surah, mapping.ayah, 'alafasy', volume);
           if (onComplete) {
             onComplete();
@@ -79,6 +103,15 @@ class AudioService {
 
     if (phraseMapping[fileName]) {
       try {
+        // Try Spark-TTS audio first (if available)
+        if (await hasSparkTTSAudio(fileName)) {
+          await playSparkTTSPhrase(fileName, volume);
+          if (onComplete) {
+            onComplete();
+          }
+          return;
+        }
+        // Fall back to regular phrase service
         await playPhrase(phraseMapping[fileName], volume);
         if (onComplete) {
           onComplete();

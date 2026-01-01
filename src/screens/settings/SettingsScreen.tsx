@@ -18,7 +18,7 @@ import {
 } from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
 import {useAuth} from '@context/AuthContext';
-import {Slider} from '@react-native-community/slider';
+import Slider from '@react-native-community/slider';
 import {spacing, typography, colors, elevation} from '@constants/theme';
 import {azanService, AzanVoice} from '@services/azan/azanService';
 import {prisma} from '@services/database/prismaClient';

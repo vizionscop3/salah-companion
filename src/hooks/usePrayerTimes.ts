@@ -8,13 +8,19 @@ import {useState, useEffect, useCallback} from 'react';
 import {
   calculatePrayerTimes,
   getNextPrayer,
+  getRecommendedCalculationMethod,
   PrayerTimes,
   PrayerTimeConfig,
 } from '@services/prayer/prayerTimeService';
 import {
+  fetchPrayerTimesFromAlAdhan,
+  isAlAdhanApiAvailable,
+} from '@services/prayer/aladhanApiService';
+import {
   getCurrentLocation,
   requestLocationPermission,
   getTimezoneFromLocation,
+  getUserLocation,
   Location,
 } from '@services/location/locationService';
 
@@ -43,11 +49,14 @@ export function usePrayerTimes(
   // Then try to get user location in the background
   useEffect(() => {
     // Set default prayer times immediately so app doesn't hang
+    // Use ISNA for New York (North America standard, matches ICCNY)
+    const defaultMethod = config?.calculationMethod ?? 
+      getRecommendedCalculationMethod(40.7128, -74.006, 'America/New_York');
     const defaultTimes = calculatePrayerTimes({
       latitude: 40.7128,
       longitude: -74.006,
       timezone: 'America/New_York',
-      calculationMethod: config?.calculationMethod ?? 'MWL',
+      calculationMethod: defaultMethod,
       asrMethod: config?.asrMethod ?? 'Shafi',
     });
     setPrayerTimes(defaultTimes);
@@ -60,23 +69,26 @@ export function usePrayerTimes(
   useEffect(() => {
     if (!loading || prayerTimes) return; // Don't set timeout if not loading or already have data
     
-    const timeout = setTimeout(() => {
-      if (__DEV__) {
-        console.warn('⏱️ Prayer times loading timeout (3s) - using default location');
-      }
-      setLoading(false);
-      // Calculate with default location immediately
-      const times = calculatePrayerTimes({
-        latitude: 40.7128,
-        longitude: -74.006,
-        timezone: 'America/New_York',
-        calculationMethod: config?.calculationMethod ?? 'MWL',
-        asrMethod: config?.asrMethod ?? 'Shafi',
-      });
-      setPrayerTimes(times);
-      setNextPrayer(getNextPrayer(times));
-      console.log('✅ Timeout fallback: Default prayer times set');
-    }, 3000); // 3 second timeout (maximum)
+      const timeout = setTimeout(() => {
+        if (__DEV__) {
+          console.warn('⏱️ Prayer times loading timeout (3s) - using default location');
+        }
+        setLoading(false);
+        // Calculate with default location immediately
+        // Use ISNA for New York (North America standard, matches ICCNY)
+        const defaultMethod = config?.calculationMethod ?? 
+          getRecommendedCalculationMethod(40.7128, -74.006, 'America/New_York');
+        const times = calculatePrayerTimes({
+          latitude: 40.7128,
+          longitude: -74.006,
+          timezone: 'America/New_York',
+          calculationMethod: defaultMethod,
+          asrMethod: config?.asrMethod ?? 'Shafi',
+        });
+        setPrayerTimes(times);
+        setNextPrayer(getNextPrayer(times));
+        console.log('✅ Timeout fallback: Default prayer times set');
+      }, 3000); // 3 second timeout (maximum)
     
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,67 +102,100 @@ export function usePrayerTimes(
 
         let finalLocation = userLocation;
 
-        // Get location if not provided - with fast timeout and graceful fallback
+        // Get location if not provided - Priority: Manual > GPS > Default
         if (!finalLocation) {
           try {
-            // Check permission first (fast check)
-            const hasPermission = await requestLocationPermission();
-            if (!hasPermission) {
-              console.log('📍 Location permission denied - using default coordinates');
-              // Immediately use default location - don't wait
-              finalLocation = null;
-            } else {
-              // Try to get location with a short timeout (3 seconds max)
-              console.log('📍 Attempting to get current location...');
-              const locationPromise = getCurrentLocation();
-              const timeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('Location request timeout')), 3000);
-              });
-              
-              try {
-                finalLocation = await Promise.race([locationPromise, timeoutPromise]);
-                setLocation(finalLocation);
-                console.log('✅ Location obtained successfully');
-              } catch (locationError) {
-                // Only log in dev mode - location timeout is expected behavior
-                if (__DEV__) {
-                  console.warn('⚠️ Location request failed or timed out - using default coordinates:', locationError);
-                }
-                // Use default location on any error
-                finalLocation = null;
+            // Use getUserLocation which checks manual location first, then GPS, then default
+            const userLocationResult = await getUserLocation();
+            finalLocation = {
+              latitude: userLocationResult.latitude,
+              longitude: userLocationResult.longitude,
+            };
+            setLocation(finalLocation);
+            
+            if (__DEV__) {
+              console.log(`📍 Location source: ${userLocationResult.source}`);
+              if (userLocationResult.source === 'manual') {
+                console.log('✅ Using manual location selection');
+              } else if (userLocationResult.source === 'gps') {
+                console.log('✅ Using GPS location');
+              } else {
+                console.log('ℹ️ Using default location (New York)');
               }
             }
           } catch (locationError) {
             // Only log in dev mode
             if (__DEV__) {
-              console.warn('⚠️ Error in location flow - using default coordinates:', locationError);
+              console.warn('⚠️ Error getting location - using default coordinates:', locationError);
             }
             // Use default location on any error
-            finalLocation = null;
+            finalLocation = undefined;
           }
         }
 
         // Always use default coordinates if location unavailable (privacy-friendly)
         const latitude = finalLocation?.latitude ?? 40.7128;
         const longitude = finalLocation?.longitude ?? -74.006;
-        const timezone =
-          finalLocation
-            ? getTimezoneFromLocation(latitude, longitude)
-            : 'America/New_York';
+        
+        // Get timezone - try to get from manual location or calculate from coordinates
+        let timezone = 'America/New_York';
+        try {
+          const userLocationResult = await getUserLocation();
+          timezone = userLocationResult.timezone;
+        } catch {
+          // Fallback to calculating from coordinates
+          timezone = getTimezoneFromLocation(latitude, longitude);
+        }
+
+        // Determine calculation method: use config if provided, otherwise recommend based on location
+        const calculationMethod = config?.calculationMethod ?? 
+          getRecommendedCalculationMethod(latitude, longitude, timezone);
 
         console.log(`🕌 Calculating prayer times for: ${finalLocation ? 'User location' : 'Default location (New York)'}`);
+        if (__DEV__) {
+          console.log(`📐 Using calculation method: ${calculationMethod}`);
+        }
 
-        // Calculate prayer times (this is synchronous and fast)
-        const times = calculatePrayerTimes({
-          latitude,
-          longitude,
-          timezone,
-          calculationMethod: config?.calculationMethod ?? 'MWL',
-          asrMethod: config?.asrMethod ?? 'Shafi',
-          fajrAngle: config?.fajrAngle,
-          ishaAngle: config?.ishaAngle,
-          date: config?.date,
-        });
+        // Try AlAdhan API first (more accurate, matches local mosque timings)
+        let times: PrayerTimes;
+        try {
+          const apiAvailable = await isAlAdhanApiAvailable();
+          if (apiAvailable) {
+            if (__DEV__) {
+              console.log('📡 Fetching prayer times from AlAdhan API...');
+            }
+            times = await fetchPrayerTimesFromAlAdhan(
+              latitude,
+              longitude,
+              calculationMethod,
+              config?.asrMethod ?? 'Shafi',
+              config?.date,
+            );
+            if (__DEV__) {
+              console.log('✅ Prayer times fetched from AlAdhan API');
+            }
+          } else {
+            throw new Error('AlAdhan API not available');
+          }
+        } catch (apiError) {
+          // Fallback to local calculation if API fails
+          if (__DEV__) {
+            console.warn('⚠️ AlAdhan API failed, using local calculation:', apiError);
+          }
+          times = calculatePrayerTimes({
+            latitude,
+            longitude,
+            timezone,
+            calculationMethod,
+            asrMethod: config?.asrMethod ?? 'Shafi',
+            fajrAngle: config?.fajrAngle,
+            ishaAngle: config?.ishaAngle,
+            date: config?.date,
+          });
+          if (__DEV__) {
+            console.log('✅ Prayer times calculated locally');
+          }
+        }
 
         setPrayerTimes(times);
         setNextPrayer(getNextPrayer(times));
@@ -163,11 +208,14 @@ export function usePrayerTimes(
         
         // Even on error, try to calculate with defaults to ensure app works
         try {
+          // Use ISNA for New York (North America standard, matches ICCNY)
+          const defaultMethod = config?.calculationMethod ?? 
+            getRecommendedCalculationMethod(40.7128, -74.006, 'America/New_York');
           const defaultTimes = calculatePrayerTimes({
             latitude: 40.7128,
             longitude: -74.006,
             timezone: 'America/New_York',
-            calculationMethod: config?.calculationMethod ?? 'MWL',
+            calculationMethod: defaultMethod,
             asrMethod: config?.asrMethod ?? 'Shafi',
           });
           setPrayerTimes(defaultTimes);

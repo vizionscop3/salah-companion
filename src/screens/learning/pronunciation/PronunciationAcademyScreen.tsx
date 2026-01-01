@@ -51,11 +51,14 @@ export const PronunciationAcademyScreen: React.FC = () => {
       Promise.all(
         ARABIC_LETTERS.map(async letter => {
           const letterProg = await getLetterProgress(user.id, letter.id);
-          return [letter.id, letterProg || {isLearned: false, timesPracticed: 0}];
+          const simplified = letterProg 
+            ? {isLearned: letterProg.isLearned, timesPracticed: letterProg.timesPracticed}
+            : {isLearned: false, timesPracticed: 0};
+          return [letter.id, simplified] as [string, {isLearned: boolean; timesPracticed: number}];
         })
-      ).then(results => {
+      ).then((results) => {
         const progressMap: Record<string, {isLearned: boolean; timesPracticed: number}> = {};
-        results.forEach(([letterId, prog]: [string, any]) => {
+        results.forEach(([letterId, prog]) => {
           progressMap[letterId] = prog;
         });
         setLetterProgress(progressMap);
@@ -421,6 +424,9 @@ const styles = StyleSheet.create({
     ...typography.caption,
     marginTop: spacing.xs,
     opacity: 0.6,
+  },
+  practiceButton: {
+    marginTop: spacing.md,
   },
 });
 

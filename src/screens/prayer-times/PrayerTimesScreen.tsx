@@ -6,7 +6,7 @@
  */
 
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ActivityIndicator} from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
@@ -185,10 +185,10 @@ export const PrayerTimesScreen: React.FC = () => {
             return (
               <NeubrutalCard
                 key={prayer.key}
-                style={[
+                style={StyleSheet.flatten([
                   styles.prayerItem,
                   isNext && styles.prayerItemActive,
-                ]}
+                ].filter(Boolean))}
                 shadowSize="medium"
                 onPress={undefined}>
                 <View style={styles.prayerItemContent}>

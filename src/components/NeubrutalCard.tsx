@@ -104,8 +104,12 @@ export const NeubrutalCard: React.FC<NeubrutalCardProps> = ({
     );
   }
 
+  // Filter out props that might cause type issues with Animated.View
+  const {hitSlop, ...viewProps} = props;
+  const safeViewProps: any = hitSlop === null ? viewProps : {...viewProps, hitSlop};
+
   return (
-    <Animated.View style={cardStyle} {...props}>
+    <Animated.View style={cardStyle} {...safeViewProps}>
       {children}
     </Animated.View>
   );

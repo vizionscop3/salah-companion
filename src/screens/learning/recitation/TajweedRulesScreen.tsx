@@ -5,7 +5,7 @@
  */
 
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, TextStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Card, Title, Paragraph, Chip} from 'react-native-paper';
 import {useTheme} from '@context/ThemeContext';
@@ -49,9 +49,9 @@ export const TajweedRulesScreen: React.FC = () => {
                   key={index}
                   style={[
                     styles.exampleText,
-                    segment.color && {color: segment.color, fontWeight: 'bold'},
+                    segment.color ? {color: segment.color, fontWeight: 'bold'} : undefined,
                     {color: segment.color || currentTheme.colors.text},
-                  ]}>
+                  ].filter(Boolean) as TextStyle[]}>
                   {segment.text}
                 </Text>
               ))}

@@ -139,7 +139,11 @@ export const WordPracticeScreen: React.FC<WordPracticeScreenProps> = ({route}) =
         surahNumber,
         ayahNumber,
       );
-      setFeedback(analysis.feedback[0] as WordFeedback);
+      // When mode is 'word', feedback is WordFeedback[]
+      const wordFeedback = (analysis.feedback as WordFeedback[])[0];
+      if (wordFeedback) {
+        setFeedback(wordFeedback);
+      }
 
       // Save practice session
       if (user) {

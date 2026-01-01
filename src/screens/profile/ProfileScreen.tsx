@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTheme} from '@context/ThemeContext';
 import {useAuth} from '@context/AuthContext';
@@ -308,7 +308,7 @@ export const ProfileScreen: React.FC = () => {
                 onPress={handleLogout}
                 variant="outline"
                 size="medium"
-                style={[styles.actionButton, styles.logoutButton]}
+                style={StyleSheet.flatten([styles.actionButton, styles.logoutButton])}
                 textStyle={styles.logoutButtonText}
                 icon={
                   <MaterialCommunityIcons name="logout" size={20} color={colors.error.main} />

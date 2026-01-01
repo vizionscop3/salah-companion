@@ -144,14 +144,14 @@ export const PremiumSubscriptionScreen: React.FC = () => {
       <View style={styles.footer}>
         <NeubrutalButton
           title="Create Account"
-          onPress={() => navigation.navigate('Register')}
+          onPress={() => (navigation as any).navigate('Register')}
           variant="primary"
           size="large"
           style={styles.button}
         />
         <NeubrutalButton
           title="Already have an account? Sign In"
-          onPress={() => navigation.navigate('Login')}
+          onPress={() => (navigation as any).navigate('Login')}
           variant="secondary"
           size="medium"
           style={styles.button}

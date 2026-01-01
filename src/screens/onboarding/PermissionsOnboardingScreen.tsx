@@ -6,7 +6,7 @@
  */
 
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, Platform, Linking} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Platform, Linking, ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTheme} from '@context/ThemeContext';
 import {spacing, typography, colors, borderRadius, brutalistShadows} from '@constants/theme';
@@ -147,8 +147,14 @@ export const PermissionsOnboardingScreen: React.FC = () => {
             ),
           );
         } else {
-          // iOS - PushNotification handles this
-          PushNotification.requestPermissions();
+          // iOS - Configure PushNotification to request permissions
+          PushNotification.configure({
+            requestPermissions: true,
+            onRegister: () => {},
+            onNotification: () => {},
+          });
+          // Note: iOS permissions are requested automatically via configure
+          // We assume granted for now (actual permission check would require native module)
           setPermissions((prev) =>
             prev.map((p) =>
               p.id === permissionId ? {...p, granted: true, requesting: false} : p,
@@ -261,6 +267,24 @@ export const PermissionsOnboardingScreen: React.FC = () => {
                     disabled={permission.requesting}
                     style={styles.permissionButton}
                   />
+                  {permission.id === 'location' && (
+                    <NeubrutalButton
+                      title="Select Manually"
+                      onPress={() => {
+                        (navigation as any).navigate('LocationSelection');
+                      }}
+                      variant="outline"
+                      size="small"
+                      style={StyleSheet.flatten([styles.permissionButton, styles.manualLocationButton])}
+                      icon={
+                        <MaterialCommunityIcons
+                          name="map-marker"
+                          size={16}
+                          color={colors.primary.main}
+                        />
+                      }
+                    />
+                  )}
                 </View>
               )}
             </View>
@@ -364,6 +388,10 @@ const styles = StyleSheet.create({
   },
   permissionButton: {
     alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
+  manualLocationButton: {
+    marginTop: spacing.xs,
   },
   infoCard: {
     flexDirection: 'row',

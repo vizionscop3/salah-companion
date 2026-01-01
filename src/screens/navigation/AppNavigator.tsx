@@ -20,6 +20,7 @@ import {RegisterScreen} from '@screens/auth/RegisterScreen';
 import {SettingsScreen} from '@screens/settings/SettingsScreen';
 import {OnboardingScreen} from '@screens/onboarding/OnboardingScreen';
 import {PermissionsOnboardingScreen} from '@screens/onboarding/PermissionsOnboardingScreen';
+import {LocationSelectionScreen} from '@screens/onboarding/LocationSelectionScreen';
 import {PronunciationAcademyScreen} from '@screens/learning/pronunciation/PronunciationAcademyScreen';
 import {LetterPracticeScreen} from '@screens/learning/pronunciation/LetterPracticeScreen';
 import {RecitationPracticeScreen} from '@screens/learning/recitation/RecitationPracticeScreen';
@@ -36,6 +37,7 @@ import {LeaderboardScreen} from '@screens/social/LeaderboardScreen';
 import {RamadanScreen} from '@screens/ramadan/RamadanScreen';
 import {EditProfileScreen} from '@screens/profile/EditProfileScreen';
 import {PremiumSubscriptionScreen} from '@screens/premium/PremiumSubscriptionScreen';
+import {QuranScreen} from '@screens/quran/QuranScreen';
 import {useAuth} from '@context/AuthContext';
 import {ActivityIndicator, View, StyleSheet} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -102,6 +104,16 @@ const MainTabs: React.FC = () => {
           tabBarLabel: 'Learning',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="book-open-variant" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Quran"
+        component={QuranScreen}
+        options={{
+          tabBarLabel: 'Quran',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="book-multiple" size={size} color={color} />
           ),
         }}
       />
@@ -286,6 +298,24 @@ export const AppNavigator: React.FC = () => {
           component={PermissionsOnboardingScreen}
           options={{headerShown: false}}
         />
+        <Stack.Screen
+          name="LocationSelection"
+          component={LocationSelectionScreen}
+          options={{
+            headerShown: true,
+            title: 'Select Location',
+            headerStyle: {
+              backgroundColor: colors.surface.secondary,
+              borderBottomWidth: 3,
+              borderBottomColor: colors.primary.main,
+            },
+            headerTintColor: colors.text.primary,
+            headerTitleStyle: {
+              fontFamily: 'Poppins',
+              fontWeight: '700',
+            },
+          }}
+        />
       </Stack.Navigator>
     );
   }
@@ -329,7 +359,7 @@ export const AppNavigator: React.FC = () => {
           />
           <Stack.Screen
             name="LetterPractice"
-            component={LetterPracticeScreen}
+            component={LetterPracticeScreen as any}
             options={{
               headerShown: true,
               title: 'Letter Practice',
@@ -353,7 +383,7 @@ export const AppNavigator: React.FC = () => {
           />
           <Stack.Screen
             name="WordPractice"
-            component={WordPracticeScreen}
+            component={WordPracticeScreen as any}
             options={{
               headerShown: true,
               title: 'Word Practice',
@@ -361,7 +391,7 @@ export const AppNavigator: React.FC = () => {
           />
           <Stack.Screen
             name="AyahPractice"
-            component={AyahPracticeScreen}
+            component={AyahPracticeScreen as any}
             options={{
               headerShown: true,
               title: 'Ayah Practice',
@@ -369,7 +399,7 @@ export const AppNavigator: React.FC = () => {
           />
           <Stack.Screen
             name="SurahPractice"
-            component={SurahPracticeScreen}
+            component={SurahPracticeScreen as any}
             options={{
               headerShown: true,
               title: 'Surah Practice',
@@ -503,7 +533,7 @@ export const AppNavigator: React.FC = () => {
               />
               <Stack.Screen
                 name="LetterPractice"
-                component={LetterPracticeScreen}
+                component={LetterPracticeScreen as any}
                 options={{
                   headerShown: true,
                   title: 'Letter Practice',
@@ -527,7 +557,7 @@ export const AppNavigator: React.FC = () => {
               />
               <Stack.Screen
                 name="WordPractice"
-                component={WordPracticeScreen}
+                component={WordPracticeScreen as any}
                 options={{
                   headerShown: true,
                   title: 'Word Practice',
@@ -535,7 +565,7 @@ export const AppNavigator: React.FC = () => {
               />
               <Stack.Screen
                 name="AyahPractice"
-                component={AyahPracticeScreen}
+                component={AyahPracticeScreen as any}
                 options={{
                   headerShown: true,
                   title: 'Ayah Practice',
@@ -543,7 +573,7 @@ export const AppNavigator: React.FC = () => {
               />
               <Stack.Screen
                 name="SurahPractice"
-                component={SurahPracticeScreen}
+                component={SurahPracticeScreen as any}
                 options={{
                   headerShown: true,
                   title: 'Surah Practice',

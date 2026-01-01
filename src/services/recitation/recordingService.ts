@@ -10,6 +10,13 @@ import RNFS from 'react-native-fs';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 
+/**
+ * Get the recording directory path
+ */
+function getRecordingDirectory(): string {
+  return `${RNFS.DocumentDirectoryPath}/recordings`;
+}
+
 export interface RecordingState {
   isRecording: boolean;
   isPaused: boolean;
@@ -90,7 +97,7 @@ class RecordingService {
         AVEncoderAudioQualityKeyIOS: 127, // High quality
         AVNumberOfChannelsKeyIOS: 2,
         AVFormatIDKeyIOS: Platform.select({
-          ios: 'm4a',
+          ios: 'm4a' as any, // Type assertion needed for audio format
           android: undefined,
         }),
       };
@@ -107,10 +114,13 @@ class RecordingService {
       };
 
       // Start position tracking
-      this.positionInterval = setInterval(async () => {
-        const position = await audioRecorderPlayer.getCurrentPosition();
-        this.recordingState.currentPosition = position;
-        this.recordingState.duration = position;
+      // Note: getCurrentPosition may not be available during recording
+      // Using a simple timer-based approach instead
+      this.positionInterval = setInterval(() => {
+        // Position tracking during recording is approximate
+        // The actual duration will be set when recording stops
+        this.recordingState.currentPosition += 100;
+        this.recordingState.duration += 100;
       }, 100);
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -143,10 +153,10 @@ class RecordingService {
       this.recordingState.isPaused = false;
 
       // Resume position tracking
-      this.positionInterval = setInterval(async () => {
-        const position = await audioRecorderPlayer.getCurrentPosition();
-        this.recordingState.currentPosition = position;
-        this.recordingState.duration = position;
+      // Note: getCurrentPosition may not be available during recording
+      this.positionInterval = setInterval(() => {
+        this.recordingState.currentPosition += 100;
+        this.recordingState.duration += 100;
       }, 100);
     } catch (error) {
       console.error('Error resuming recording:', error);
